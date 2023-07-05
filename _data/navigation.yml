@@ -16,13 +16,34 @@ main:
   #   url: /categories/
 
 # sidebar navigation (categories)
-# 2022.02.15 sidebar update : simple ver.
 categories:
-  - title: "Categories1"
-    url: /categories/categories1/
-  - title: "Categories2"
-    url: /categories/categories2/
-  - title: "Categories3"
-    url: /categories/categories3/
-  - title: "Categories4"
-    url: /categories/categories4/
+  - title: "Computer Science"
+    children:
+      - title: "Data Structure"
+        url: /categories/data-structure/
+      - title: "Database"
+        url: /categories/database/
+      - title: "Network"
+        url: /categories/network/
+      - title: "Operating System"
+        url: /categories/operating-system/
+
+  - title: "Language"
+    children:
+      - title: "Python"
+        url: /categories/python/
+
+  - title: "Big Data"
+    children:
+      - title: "Spark"
+        url: /categories/spark/
+      - title: "Kafka"
+        url: /categories/kafka/
+      - title: "Airflow"
+        url: /categories/airflow/
+
+  - title: "Cloud"
+    children:
+      - title: "AWS"
+        url: /categories/aws/
+
