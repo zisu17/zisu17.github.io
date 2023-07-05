@@ -1,9 +1,9 @@
 ---
-title: "Cloud"
+title: "Python"
 layout: category
-permalink: /categories/cloud/
+permalink: /categories/python/
 author_profile: true
-taxonomy: Cloud
+taxonomy: Python
 sidebar:
   nav: "categories"
 ---
