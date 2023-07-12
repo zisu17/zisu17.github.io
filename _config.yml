@@ -18,7 +18,7 @@
 minimal_mistakes_skin: "plum" # "default" "air", "aqua", ...
 
 # Site Settings
-locale: "en-US" #"en-US"
+locale: "ko-KR"
 title: "Jisu's Githublog" # 상단 헤더에 보이는 블로그 명
 title_separator: "&#124;"
 subtitle: # site tagline that appears below site title in masthead
@@ -28,6 +28,8 @@ url: "https://zisu17.github.io" # 블로그 URL
 baseurl: # the subpath of your site, e.g. "/blog"
 repository: "zisu17/zisu17.github.io" # GitHub Repo 이름
 teaser: #
+futrue: true
+
 
 # logo                     : # 블로그명 앞에 로고 추가하고 싶을 경우 사용
 masthead_title: # overrides the website title displayed in the masthead, use " " for no title
