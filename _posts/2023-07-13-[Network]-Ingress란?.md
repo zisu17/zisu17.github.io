@@ -48,7 +48,8 @@ Ingress Gateway는 외부에서 쿠버네티스 클러스터(이웃집)로 들�
 Ingress Gateway는 사용자가 '문'을 통해 클러스터 내의 다양한 서비스에 접근하게 해주는 역할을 하고 '키'는 각 서비스에 접근할 수 있는 권한을 부여합니다.  
 
 ## Ingress Gateway와 Ingress Controller
-![image](https://github.com/zisu17/zisu17.github.io/assets/108858121/e01898bd-4e5c-4eab-b984-192809713d5f)
+<img width="1323" alt="image" src="https://github.com/zisu17/zisu17.github.io/assets/108858121/7253fc76-8486-49f8-a8b6-c91edaf766f7">
+
 > 이미지 출처: [Jimmy Song's Blog](https://jimmysong.io/en/blog/why-gateway-api-is-the-future-of-ingress-and-mesh/)
 
 
