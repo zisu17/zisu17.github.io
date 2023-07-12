@@ -22,11 +22,6 @@ last_modified_at: 2023-07-13
 네트워크 관리자는 Ingress와 Egress 트래픽을 모니터링하고 분석하여 네트워크 성능을 최적화하고 보안을 유지하는데 사용합니다.  
 
 ## Ingress
-<p float="left">
-  <img src="https://github.com/zisu17/zisu17.github.io/assets/108858121/95ad6f25-15ba-421a-86ea-71fc1bedc414" width="45%" />
-  <img src="https://github.com/zisu17/zisu17.github.io/assets/108858121/e695189b-80c2-4d8c-ad0e-bf4e89ed3a3b" width="45%" /> 
-</p>
-
 
 먼저 쿠버네티스에서의 Ingress라는 개념을 이해하려면 쿠버네티스가 어떻게 네트워크 트래픽을 관리하는지 이해하는 것이 중요합니다.  
 쿠버네티스는 컨테이너화된 애플리케이션을 실행하고 관리하는 오픈 소스 플랫폼이고 클러스터라는 개념을 사용해 여러 노드(서버)를 하나의 단위로 묶어서 관리합니다.  
@@ -48,10 +43,6 @@ Ingress Gateway는 외부에서 쿠버네티스 클러스터(이웃집)로 들�
 Ingress Gateway는 사용자가 '문'을 통해 클러스터 내의 다양한 서비스에 접근하게 해주는 역할을 하고 '키'는 각 서비스에 접근할 수 있는 권한을 부여합니다.  
 
 ## Ingress Gateway와 Ingress Controller
-<img width="1323" alt="image" src="https://github.com/zisu17/zisu17.github.io/assets/108858121/7253fc76-8486-49f8-a8b6-c91edaf766f7">
-
-> 이미지 출처: [Jimmy Song's Blog](https://jimmysong.io/en/blog/why-gateway-api-is-the-future-of-ingress-and-mesh/)
-
 
 ### Ingress Gateway 
 서비스 메쉬 아키텍처 특히 Istio와 같은 플랫폼에서 사용되는 개념입니다.  
