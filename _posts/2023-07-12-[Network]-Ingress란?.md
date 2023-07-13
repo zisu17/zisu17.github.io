@@ -13,8 +13,8 @@ permalink: /network/[Network]-Ingress-Gateway란?/
 toc: true
 toc_sticky: true
 
-date: 2023-07-13
-last_modified_at: 2023-07-13
+date: 2023-07-12
+last_modified_at: 2023-07-12
 ---
 
 ## Ingress와 Egress
