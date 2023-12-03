@@ -1,5 +1,5 @@
+
 ---
-published: true
 title: "[Network] Ingress란?"
 excerpt: "Ingress Gateway와 Controller의 개념"
 
