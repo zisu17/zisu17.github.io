@@ -1,5 +1,5 @@
 ---
-title: "[Network] Ingress Gateway"
+title: "[Network] Ingress Gateway의 개념"
 excerpt: "Ingress Gateway와 Controller의 개념"
 
 categories:
@@ -7,7 +7,7 @@ categories:
 tags:
   - [Network]
 
-permalink: /infra/[Network]-Ingress-Gateway/
+permalink: /infra/[Network]-Ingress-Gateway의-개념/
 
 toc: true
 toc_sticky: true
