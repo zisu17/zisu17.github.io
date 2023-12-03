@@ -1,5 +1,5 @@
 ---
-title: "[Network] Ingress란?"
+title: "[Network] Ingress Gateway란?"
 excerpt: "Ingress Gateway와 Controller의 개념"
 
 categories:
