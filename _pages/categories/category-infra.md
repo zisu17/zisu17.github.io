@@ -1,9 +1,9 @@
 ---
-title: "Network"
+title: "Infra"
 layout: category
-permalink: /categories/network/
+permalink: /categories/infra/
 author_profile: true
-taxonomy: Network
+taxonomy: Infra
 sidebar:
   nav: "categories"
 ---

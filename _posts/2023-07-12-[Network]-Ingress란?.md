@@ -4,11 +4,11 @@ title: "[Network] Ingress란?"
 excerpt: "Ingress Gateway와 Controller의 개념"
 
 categories:
-  - Network
+  - Infra
 tags:
   - [Network]
 
-permalink: /network/[Network]-Ingress-Gateway란?/
+permalink: /infra/[Network]-Ingress-Gateway란?/
 
 toc: true
 toc_sticky: true

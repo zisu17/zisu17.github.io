@@ -18,32 +18,12 @@ main:
 # sidebar navigation (categories)
 categories:
   - title: "Computer Science"
-    children:
-      - title: "Data Structure"
-        url: /categories/data-structure/
-      - title: "Database"
-        url: /categories/database/
-      - title: "Network"
-        url: /categories/network/
-      - title: "Operating System"
-        url: /categories/operating-system/
-
+    url: /categories/computer-science/
+  - title: "Data"
+    url: /categories/data/
   - title: "Language"
-    children:
-      - title: "Python"
-        url: /categories/python/
-
-  - title: "Big Data"
-    children:
-      - title: "Spark"
-        url: /categories/spark/
-      - title: "Kafka"
-        url: /categories/kafka/
-      - title: "Airflow"
-        url: /categories/airflow/
-
-  - title: "Cloud"
-    children:
-      - title: "AWS"
-        url: /categories/aws/
-
+    url: /categories/language/
+  - title: "Web"
+    url: /categories/web/
+  - title: "Infra"
+    url: /categories/infra/
