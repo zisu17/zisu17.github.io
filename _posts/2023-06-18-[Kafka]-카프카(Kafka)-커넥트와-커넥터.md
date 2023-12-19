@@ -1,5 +1,5 @@
 ---
-title: "[Data] 카프카(Kafka) 커넥트와 커넥터"
+title: "[Kafka] 카프카(Kafka) 커넥트와 커넥터"
 excerpt: "메시지큐 카프카의 커넥트와 커넥터 개념 및 실습"
 
 categories:
@@ -7,7 +7,7 @@ categories:
 tags:
   - [Data]
 
-permalink: /data/[Data]-카프카(Kafka)-커넥트와-커넥터/
+permalink: /data/[Kafka]-카프카(Kafka)-커넥트와-커넥터/
 
 toc: true
 toc_sticky: true
