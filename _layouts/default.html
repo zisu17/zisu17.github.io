@@ -8,10 +8,10 @@
   Free for personal and commercial use under the MIT license
   https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
 -->
-<html lang="{{ site.locale | slice: 0,2 | default: "en" }}" class="no-js">
+<html lang="{{ site.locale | slice: 0,2 | default: 'en' }}" class="no-js">
   <head>
-    <style> 
-      ::-webkit-scrollbar{ 
+    <style>
+      ::-webkit-scrollbar{
         width: 10px;
         height: 10px;
       }
@@ -52,9 +52,10 @@
           /* border-radius: 50%; */
       }
     </style>
-    
+
     {% include head.html %}
     {% include head/custom.html %}
+    {% include analytics.html %}
 
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon/favicon-32x32.png">
