@@ -19,9 +19,9 @@ minimal_mistakes_skin: "plum" # "default" "air", "aqua", ...
 
 # Site Settings
 locale: "ko-KR"
-title: "ZTL" # 상단 헤더에 보이는 블로그 명
+title: "Jisu's GithuBlog" # 상단 헤더에 보이는 블로그 명
 title_separator: "&#124;"
-subtitle: "Zisu's Tech Log" # site tagline that appears below site title in masthead
+subtitle: # site tagline that appears below site title in masthead
 name: "zisu" # 블로그 닉네임 설정
 description: "소프트웨어 기술을 공부하고 기록하는 공간" # 블로그 설명
 url: "https://zisu17.github.io" # 블로그 URL

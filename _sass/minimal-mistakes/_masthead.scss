@@ -76,8 +76,9 @@
   -ms-flex-item-align: center;
   align-self: center;
   font-weight: bold;
-  font-size: 1.4rem;
+  font-size: 2.1rem;
   font-style: italic;
+  margin-right: 10px;
 }
 
 .site-subtitle {
@@ -114,7 +115,7 @@
   list-style-type: none;
   white-space: nowrap;
   font-weight: bold;
-  
+
   &--lg {
     padding-right: 2em;
     font-weight: 700;
