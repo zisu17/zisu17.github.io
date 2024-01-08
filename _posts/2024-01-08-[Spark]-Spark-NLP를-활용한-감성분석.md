@@ -12,7 +12,7 @@ permalink: /data/[Spark]-Spark-NLP를-활용한-감성분석/
 toc: true
 toc_sticky: true
 
-date: 2024-01-09
+date: 2024-01-08
 last_modified_at: 2024-01-09
 ---
 
