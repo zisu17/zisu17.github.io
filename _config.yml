@@ -28,7 +28,7 @@ url: "https://zisu17.github.io" # 블로그 URL
 baseurl: # the subpath of your site, e.g. "/blog"
 repository: "zisu17/zisu17.github.io" # GitHub Repo 이름
 teaser: #
-futrue: true
+future: true
 
 
 # logo                     : # 블로그명 앞에 로고 추가하고 싶을 경우 사용
