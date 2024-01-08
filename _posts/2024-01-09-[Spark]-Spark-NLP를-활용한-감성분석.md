@@ -26,8 +26,6 @@ Spark NLP의 가장 큰 장점은 분산 컴퓨팅 클러스터에서 실행할 
 실시간 데이터 수집 파이프라인은 스파크로 되어있는데 분석이 판다스로 되어있으면 통합하기가 어려운데 이러한 문제점을 해결할 수 있다. 
 아파치 카프카와 같은 다른 빅데이터 기술과도 잘 통합되기 때문에 분산 컴퓨팅 환경에서 NLP 애플리케이션을 구축하는 데 적합하다.
 
-<br>
-
 
 ## PretrainedPipeline 모델을 불러와 간단한 영문 감성 분석 진행
 
@@ -72,8 +70,8 @@ print(result)
 
 
 ## John Snow Labs에서 제공하는 한국어 감성 분석 모델
-https://sparknlp.org/2022/09/14/electra_classifier_ko_base_v3_generalized_sentiment_analysis_ko.html
-https://huggingface.co/jaehyeong/koelectra-base-v3-generalized-sentiment-analysis
+🔗 [Korean ElectraForSequenceClassification Base Cased model](https://sparknlp.org/2022/09/14/electra_classifier_ko_base_v3_generalized_sentiment_analysis_ko.html)  
+🔗 [koelectra-base-v3-generalized-sentiment-analysis](https://huggingface.co/jaehyeong/koelectra-base-v3-generalized-sentiment-analysis)
 
 
 ```python
