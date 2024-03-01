@@ -90,7 +90,14 @@
         {% include_cached footer.html %}
       </footer>
     </div>
-
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('img');
+        images.forEach(function(img) {
+          img.setAttribute('alt', ''); // 모든 이미지의 alt 속성을 비워줍니다.
+        });
+      });
+    </script>
     {% include scripts.html %}
 
   </body>
