@@ -22,8 +22,11 @@ last_modified_at: 2026-06-17
 
 > 세법 GraphDB 시리즈
 > - [1편. 왜 세법에는 GraphDB가 필요한가](/data/tax-graphdb-series-01-concept/)
-> - [2편. LawUnit 중심 데이터 모델](/data/tax-graphdb-series-02-modeling/)
-> - [3편. Graph-RAG 검색과 운영 아키텍처](/data/tax-graphdb-series-03-graphrag-ops/)
+> - [2편. LawUnit 모델링 원칙](/data/tax-graphdb-series-02-modeling/)
+> - [3편. 핵심 노드 상세 설계](/data/tax-graphdb-series-03-node-model/)
+> - [4편. 관계 모델과 Cypher 예시](/data/tax-graphdb-series-04-relationships-cypher/)
+> - [5편. Graph-RAG 검색 설계](/data/tax-graphdb-series-05-graphrag-search/)
+> - [6편. 운영 아키텍처와 로드맵](/data/tax-graphdb-series-06-graphrag-operations/)
 
 ## 1. 이 글의 목적
 
@@ -464,4 +467,4 @@ LLM
 
 ---
 
-다음 글: [세법 GraphDB 설계 2편: LawUnit 중심 데이터 모델](/data/tax-graphdb-series-02-modeling/)
+다음 글: [2편. LawUnit 모델링 원칙](/data/tax-graphdb-series-02-modeling/)
