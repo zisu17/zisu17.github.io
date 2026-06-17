@@ -21,9 +21,9 @@ last_modified_at: 2026-06-17
 ---
 
 > 세법 GraphDB 시리즈
-> [1편. 왜 세법에는 GraphDB가 필요한가](/data/tax-graphdb-series-01-concept/)
-> [2편. LawUnit 중심 데이터 모델](/data/tax-graphdb-series-02-modeling/)
-> [3편. Graph-RAG 검색과 운영 아키텍처](/data/tax-graphdb-series-03-graphrag-ops/)
+> - [1편. 왜 세법에는 GraphDB가 필요한가](/data/tax-graphdb-series-01-concept/)
+> - [2편. LawUnit 중심 데이터 모델](/data/tax-graphdb-series-02-modeling/)
+> - [3편. Graph-RAG 검색과 운영 아키텍처](/data/tax-graphdb-series-03-graphrag-ops/)
 
 ## 1. 이 글의 목적
 
