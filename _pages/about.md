@@ -1,5 +1,5 @@
 ---
-title: "안녕하세요. 데이터 엔지니어 zisu입니다 👋"
+title: "Building Reliable Data Flows"
 permalink: /about/
 layout: single
 comments: false
