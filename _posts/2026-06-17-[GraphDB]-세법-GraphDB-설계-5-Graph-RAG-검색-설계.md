@@ -3,7 +3,7 @@ title: "[GraphDB] 세법 GraphDB 설계 5편: Graph-RAG 검색 설계"
 excerpt: "세법 GraphDB 모델을 기반으로 Chunk, Embedding, Vector Search, Graph Expansion, 관계 추출 전략을 설계한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - GraphDB
