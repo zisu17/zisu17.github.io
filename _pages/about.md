@@ -1,11 +1,9 @@
 ---
-title: "Building Reliable Data Flows"
+title: "안녕하세요. 데이터가 흐르는 길을 만들고 운영하는 데이터 엔지니어 지수입니다 👋"
 permalink: /about/
 layout: single
 comments: false
 ---
-
-# 안녕하세요. 데이터가 흐르는 길을 만들고 운영하는 데이터 엔지니어 지수입니다 👋
 
 데이터 파이프라인이 처음 성공했을 때보다, 매일 같은 결과를 안정적으로 만들어내기 시작했을 때 더 큰 성취감을 느낍니다.
 
