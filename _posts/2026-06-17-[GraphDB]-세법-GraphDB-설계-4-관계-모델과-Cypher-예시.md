@@ -3,7 +3,7 @@ title: "[GraphDB] 세법 GraphDB 설계 4편: 관계 모델과 Cypher 예시"
 excerpt: "세법 GraphDB의 관계 모델, 관계 속성 표준, 증여세 예시 그래프, Neo4j Cypher 패턴을 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - GraphDB
