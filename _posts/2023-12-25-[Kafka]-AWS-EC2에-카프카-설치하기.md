@@ -3,7 +3,7 @@ title: "[Kafka] AWS EC2에 카프카 설치하기"
 excerpt: "AWS EC2에 카프카 서버, 프로듀서 구동하기"
 
 categories:
-  - Data
+  - Infra
 tags:
   - [데이터]
 
