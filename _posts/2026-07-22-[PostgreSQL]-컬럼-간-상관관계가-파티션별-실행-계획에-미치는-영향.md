@@ -1,15 +1,16 @@
 ---
-title: "[PostgreSQL] 파티션 키가 아닌 날짜 조건인데도 조회가 빨라진 이유"
-excerpt: "주문일로 파티셔닝한 테이블을 출고일로 조회했을 때 읽기량이 줄어든 사례를 통해 파티션, 인덱스, 실행 계획의 관계를 쉽게 설명한다."
+title: "[PostgreSQL] 컬럼 간 상관관계가 파티션별 실행 계획에 미치는 영향"
+excerpt: "PostgreSQL에서 correlation이 가리키는 두 대상(플래너 통계와 데이터 관계)을 구분하고, 상관된 컬럼으로 파티셔닝했을 때 파티션별 통계와 접근 경로 선택이 읽기량을 줄이는 원리를 정리한다."
 
 categories:
   - Database
 tags:
   - Data
   - PostgreSQL
-  - Partitioning
-  - Index
-  - 실행계획
+  - 옵티마이저
+  - correlation
+  - 파티셔닝
+  - 통계
 
 permalink: /data/postgresql-column-correlation-partitioning/
 
@@ -271,8 +272,8 @@ Append
 
 ## 11. 참고 자료
 
-- [PostgreSQL 공식 문서: Table Partitioning](https://www.postgresql.org/docs/current/ddl-partitioning.html)
-- [PostgreSQL 공식 문서: ANALYZE](https://www.postgresql.org/docs/current/sql-analyze.html)
-- [PostgreSQL 공식 문서: Using EXPLAIN](https://www.postgresql.org/docs/current/using-explain.html)
-- [PostgreSQL 공식 문서: EXPLAIN](https://www.postgresql.org/docs/current/sql-explain.html)
-- [PostgreSQL 공식 문서: Parallel Plans](https://www.postgresql.org/docs/current/parallel-plans.html)
+- [PostgreSQL 공식 문서: Table Partitioning](https://www.postgresql.org/docs/current/ddl-partitioning.html) — 파티션의 저장 구조, 파티션별 인덱스, 파티션 프루닝의 동작 기준
+- [PostgreSQL 공식 문서: ANALYZE](https://www.postgresql.org/docs/current/sql-analyze.html) — 플래너 통계의 용도와 파티션별 통계 수집 방식
+- [PostgreSQL 공식 문서: Using EXPLAIN](https://www.postgresql.org/docs/current/using-explain.html) — 예상 행 수와 실제 행 수를 포함한 실행 계획 해석 방법
+- [PostgreSQL 공식 문서: EXPLAIN](https://www.postgresql.org/docs/current/sql-explain.html) — `ANALYZE`, `BUFFERS`, `shared hit`, `shared read`의 의미
+- [PostgreSQL 공식 문서: Parallel Plans](https://www.postgresql.org/docs/current/parallel-plans.html) — 여러 하위 스캔의 결과를 합치는 `Append` 계열 노드
