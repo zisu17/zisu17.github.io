@@ -17,13 +17,11 @@ main:
 
 # sidebar navigation (categories)
 categories:
+  - title: "Data Engineering"
+    url: /categories/data-engineering/
+  - title: "Database"
+    url: /categories/database/
   - title: "Computer Science"
     url: /categories/computer-science/
-  - title: "Data"
-    url: /categories/data/
-  - title: "Language"
-    url: /categories/language/
-  - title: "Web"
-    url: /categories/web/
   - title: "Infra"
     url: /categories/infra/
