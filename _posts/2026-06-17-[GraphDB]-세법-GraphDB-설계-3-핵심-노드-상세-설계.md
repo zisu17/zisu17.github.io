@@ -3,7 +3,7 @@ title: "[GraphDB] 세법 GraphDB 설계 3편: 핵심 노드 상세 설계"
 excerpt: "Law, LawUnit, Decision, Guidance, TextChunk, Embedding 등 세법 GraphDB의 핵심 노드와 속성을 상세히 설계한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - GraphDB
