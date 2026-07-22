@@ -3,7 +3,7 @@ title: "[PostgreSQL] 장기 트랜잭션이 VACUUM을 막는 이유: xmin horizo
 excerpt: "Seq Scan 반복에서 시작해 26일간 열려 있던 장기 트랜잭션에 도달한 진단 과정과, 무관한 테이블의 트랜잭션이 VACUUM을 막는 MVCC 스냅샷 원리, 조치 뒤 이어진 MVIEW 리프레시 지연 후속 이슈까지 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - PostgreSQL
