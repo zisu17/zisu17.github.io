@@ -20,10 +20,6 @@ date: 2026-07-20
 last_modified_at: 2026-07-20
 ---
 
-> LTAP 시리즈
-> - [1편. Lakebase 아키텍처로 보는 LTAP의 이해](/data/databricks-lakebase-ltap/)
-> - [2편. 오픈소스 진영의 LTAP 구성 패턴](/data/opensource-ltap-patterns/)
-
 ## 1. 개요
 
 Lakebase는 레이크하우스의 오픈 스토리지에서 실행되는 **서버리스 Postgres**다. 2025년 5월 Databricks가 약 10억 달러에 인수한 **Neon**의 스토리지·컴퓨트 분리 기술을 기반으로, 트랜잭션 데이터베이스와 데이터 레이크를 하나의 구조로 통합했다.
@@ -268,7 +264,3 @@ Lakebase는 데이터베이스를 스토리지부터 다시 설계한 결과다.
 - How the lakebase architecture stays resilient to cloud failures (Databricks Blog)
 - Databricks Lakebase is now Generally Available (Databricks Blog)
 - Neon lakebase architecture (Neon Docs)
-
----
-
-다음 글: [2편. 오픈소스 진영의 LTAP 구성 패턴](/data/opensource-ltap-patterns/)
