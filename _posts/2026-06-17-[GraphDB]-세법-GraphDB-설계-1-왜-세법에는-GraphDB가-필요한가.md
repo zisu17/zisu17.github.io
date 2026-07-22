@@ -3,7 +3,7 @@ title: "[GraphDB] 세법 GraphDB 설계 1편: 왜 세법에는 GraphDB가 필요
 excerpt: "세법 검색과 질의응답 시스템에서 GraphDB가 필요한 이유와 BM25, Vector Search, LLM의 역할 분리를 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - GraphDB
