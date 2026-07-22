@@ -3,7 +3,7 @@ title: "[Scraping] Selenium 없이 동적 웹페이지 스크래핑 하기"
 excerpt: "정적/동적 스크래핑 차이, selenium과 requests 스크래핑 방식 차이"
 
 categories:
-  - Data
+  - Data Engineering
 tags:
   - [Data, Scraping, BeautifulSoup, Selenium]
 
