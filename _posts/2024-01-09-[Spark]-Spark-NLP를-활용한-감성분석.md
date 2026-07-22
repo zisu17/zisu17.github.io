@@ -3,7 +3,7 @@ title: "[Spark] Spark NLP를 활용한 감성분석"
 excerpt: "Spark 기반의 자연어 처리 라이브러리 살펴보기"
 
 categories:
-  - Data
+  - Data Engineering
 tags:
   - [Data]
 
