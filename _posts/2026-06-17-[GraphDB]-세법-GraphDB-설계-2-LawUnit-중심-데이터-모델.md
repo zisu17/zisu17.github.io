@@ -3,7 +3,7 @@ title: "[GraphDB] 세법 GraphDB 설계 2편: LawUnit 모델링 원칙"
 excerpt: "세법 GraphDB를 문서 저장소가 아니라 관계 지도로 설계하기 위한 LawUnit 중심 모델링 원칙을 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - GraphDB
