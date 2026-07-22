@@ -3,7 +3,7 @@ title: "[LTAP] Lakebase 아키텍처로 보는 LTAP의 이해"
 excerpt: "Databricks Lakebase의 스토리지·컴퓨트 분리 설계와, CDC/ETL 파이프라인 없이 OLTP와 분석을 단일 사본으로 처리하는 LTAP 개념을 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - Databricks
