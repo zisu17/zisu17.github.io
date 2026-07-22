@@ -3,7 +3,7 @@ title: "[Spark] Apache Livy로 Spark 사용하기"
 excerpt: "Livy를 활용한 인터랙티브한 스파크 작업"
 
 categories:
-  - Data
+  - Data Engineering
 tags:
   - [Data]
 
