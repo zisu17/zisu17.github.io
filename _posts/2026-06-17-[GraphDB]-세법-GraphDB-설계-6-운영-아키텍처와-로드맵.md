@@ -3,7 +3,7 @@ title: "[GraphDB] 세법 GraphDB 설계 6편: 운영 아키텍처와 로드맵"
 excerpt: "세법 Graph-RAG 서비스를 운영하기 위한 데이터 파이프라인, 서비스 아키텍처, 보안·품질 관리, 구축 로드맵을 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - GraphDB
