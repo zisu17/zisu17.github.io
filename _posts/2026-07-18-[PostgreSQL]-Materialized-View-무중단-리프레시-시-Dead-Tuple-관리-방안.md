@@ -3,7 +3,7 @@ title: "[PostgreSQL] Materialized View 무중단 리프레시 시 Dead Tuple 관
 excerpt: "REFRESH MATERIALIZED VIEW CONCURRENTLY가 Dead Tuple을 누적시키는 구조와 정기 제거, 발생 최소화, 모니터링 운영 방안을 정리한다."
 
 categories:
-  - Data
+  - Database
 tags:
   - Data
   - PostgreSQL
