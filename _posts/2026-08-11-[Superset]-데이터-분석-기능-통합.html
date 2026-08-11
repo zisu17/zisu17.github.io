@@ -1021,7 +1021,7 @@ code.inline {
     <a class="home-link" href="/">What's your ETL?</a>
     <span class="hero-badge">Data Platform / Superset</span>
     <h1>Superset 기반<br>데이터 분석 기능 통합</h1>
-    <p class="excerpt">Apache Superset 을 시각화 엔진으로 쓰되, 사용자에게는 두 번째 도구로 보이지 않게 한다. 메뉴 하나가 늘고, 데이터 모델 화면에서 분석으로 이어지고, 접속 주소는 여전히 하나다. 질의 경로는 후보 네 개 중 <em>가장 단순한 것부터</em> P0 에서 검증해 정했다 — 새 질의 엔진을 하나도 넣지 않는 1번이 다섯 항목 전부를 통과했다.</p>
+    <p class="excerpt">Apache Superset 을 시각화 엔진으로 쓰되, 사용자에게는 두 번째 도구로 보이지 않게 한다. 메뉴 하나가 늘고, 데이터 모델 화면에서 분석으로 이어지고, 접속 주소는 여전히 하나다. 쿼리는 후보 네 개 중 <em>가장 단순한 것부터</em> P0 에서 검증해 정했다 — 새 쿼리 엔진을 하나도 넣지 않는 1번이 다섯 항목 전부를 통과했다.</p>
     <div class="hero-meta">
       <span class="hero-tag">Data Platform</span>
       <span class="hero-tag">Superset</span>
@@ -1079,8 +1079,8 @@ code.inline {
     <p>
       Superset 은 SQLAlchemy 드라이버로만 데이터베이스에 붙는다. 이것이 유일한 하드 제약이고,
       나머지 선택지는 전부 이 제약을 어떻게 만족시키느냐의 문제다.
-      그래서 질의 경로는 단일안으로 정하지 않고 <strong>후보 네 개를 부품이 적은 순서로 세워</strong> P0 에서 실제로 붙여 검증했다.
-      결론부터 쓰면 — 새 질의 엔진을 하나도 추가하지 않는 1번 후보가 다섯 항목 전부를 통과했다.
+      그래서 쿼리는 단일안으로 정하지 않고 <strong>후보 네 개를 부품이 적은 순서로 세워</strong> P0 에서 실제로 붙여 검증했다.
+      결론부터 쓰면 — 새 쿼리 엔진을 하나도 추가하지 않는 1번 후보가 다섯 항목 전부를 통과했다.
     </p>
 
     <div class="dz-card-accent">
@@ -1116,7 +1116,7 @@ code.inline {
         </thead>
         <tbody>
           <tr>
-            <td><strong>질의 경로</strong></td>
+            <td><strong>쿼리</strong></td>
             <td>새 엔진을 넣지 않는다 — Superset 안의 DuckDB 가 Iceberg REST 카탈로그를 직접 ATTACH</td>
             <td>드라이버가 <code class="inline">duckdb-engine</code> 이면 SQLAlchemy 제약을 만족한다. DuckDB 는 <code class="inline">ATTACH … TYPE ICEBERG</code> 를 공식 지원하므로 dbt 가 쓰는 그 카탈로그를 그대로 본다.</td>
           </tr>
@@ -1175,7 +1175,7 @@ code.inline {
     <figure class="dz-figure">
       <div class="figbox">
         <svg viewBox="0 0 900 500" role="img"
-             aria-label="브라우저는 localhost:8000 한 곳만 접속하고, FastAPI 가 UI·기존 API·분석 API·Superset 프록시 네 경로를 처리한다. 플랫폼과 Superset 이 각각 자기 프로세스 안의 DuckDB 인스턴스로 같은 Iceberg REST 카탈로그를 ATTACH 해서 읽는다. 새 질의 엔진은 없고, 새로 만들어야 하는 것은 접속마다 ATTACH 를 실행하는 초기화 훅뿐이다."
+             aria-label="브라우저는 localhost:8000 한 곳만 접속하고, FastAPI 가 UI·기존 API·분석 API·Superset 프록시 네 경로를 처리한다. 플랫폼과 Superset 이 각각 자기 프로세스 안의 DuckDB 인스턴스로 같은 Iceberg REST 카탈로그를 ATTACH 해서 읽는다. 새 쿼리 엔진은 없고, 새로 만들어야 하는 것은 접속마다 ATTACH 를 실행하는 초기화 훅뿐이다."
              fill="none" font-family="ui-monospace, SF Mono, Menlo, monospace" font-size="12">
           <defs>
             <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -1245,7 +1245,7 @@ code.inline {
         </svg>
       </div>
       <figcaption>
-        <strong>추가되는 질의 엔진이 없다.</strong> 양쪽 모두 DuckDB 가 같은 Iceberg REST 카탈로그를
+        <strong>추가되는 쿼리 엔진이 없다.</strong> 양쪽 모두 DuckDB 가 같은 Iceberg REST 카탈로그를
         <code class="inline">ATTACH</code> 한다 — 다른 점은 어느 프로세스 안에서 도느냐뿐이다.
         그래서 이 그림에서 <em>새로 만들어야 하는 것</em>은 초록 상자 안의 한 줄, 접속마다 ATTACH 를 실행하는 초기화 훅뿐이다.
         사용자 브라우저에서 Superset 으로 가는 화살표가 없다는 점도 그대로다 — 모든 요청이 FastAPI 를 지나므로
@@ -1263,7 +1263,7 @@ code.inline {
           <tr><td><strong>MinIO</strong></td><td>오브젝트 스토리지</td><td><code class="inline">9000 · 9001</code></td><td><span class="mark-keep">기존</span></td></tr>
           <tr><td><strong>Iceberg REST</strong></td><td>테이블 카탈로그</td><td><code class="inline">8181</code></td><td><span class="mark-keep">기존</span></td></tr>
           <tr><td><strong>Airflow</strong></td><td>파이프라인 실행</td><td><code class="inline">8080</code> 계열</td><td><span class="mark-keep">기존</span></td></tr>
-          <tr><td><strong>Superset</strong></td><td>시각화 · 차트 정의 · 질의 (내장 DuckDB)</td><td>없음 (내부)</td><td><span class="mark-drop">신규</span></td></tr>
+          <tr><td><strong>Superset</strong></td><td>시각화 · 차트 정의 · 쿼리 (내장 DuckDB)</td><td>없음 (내부)</td><td><span class="mark-drop">신규</span></td></tr>
           <tr><td><strong>Postgres</strong></td><td>Superset 메타데이터 <strong>전용</strong></td><td>없음 (내부)</td><td><span class="mark-drop">신규</span></td></tr>
           <tr><td><strong>Redis</strong></td><td>Superset 캐시 · 큐</td><td>없음 (내부)</td><td><span class="mark-drop">신규</span></td></tr>
         </tbody>
@@ -1273,12 +1273,12 @@ code.inline {
       신규 셋 모두 호스트 포트를 바인딩하지 않는다. 「별도 서비스처럼 노출하지 않는다」를
       문서상의 약속이 아니라 <strong>compose 파일의 사실</strong>로 만드는 것이 핵심이다.
       Superset 관리 화면이 필요할 때만 <code class="inline">docker compose port</code> 로 임시 포워딩한다.
-      Postgres 는 <strong>메타데이터만</strong> 담는다 — 분석 질의를 같은 인스턴스에 태우면 무거운 집계가 메타DB 응답을 잡아먹는다.
+      Postgres 는 <strong>메타데이터만</strong> 담는다 — 분석 쿼리를 같은 인스턴스에 태우면 무거운 집계가 메타DB 응답을 잡아먹는다.
     </p>
 
     <div class="spectrum-divider"></div>
 
-    <h3>3.2 질의 경로 비교</h3>
+    <h3>3.2 쿼리 비교</h3>
     <p>
       SQLAlchemy 제약을 만족하는 방법이 네 가지 있고, <strong>부품이 적은 순서</strong>가 곧 검증 순서였다.
       앞의 것이 되면 뒤의 것은 필요 없다.
@@ -1400,7 +1400,7 @@ code.inline {
         <strong>② <code class="inline">DESCRIBE</code> 가 필요하다.</strong> ATTACH 직후 Iceberg 테이블의 컬럼은 아직 해석되지 않은 상태여서
         <code class="inline">information_schema</code> 에 <code class="inline">__ / UNKNOWN</code> 컬럼 하나만 들어 있다.
         Superset 은 SQLAlchemy reflection 으로 데이터셋 컬럼을 잡으므로, 이 상태로 만들면 <strong>컬럼이 하나뿐인 껍데기</strong>가 된다.
-        시간 컬럼이 없으니 시계열 차트도 못 만든다 — <em>질의는 되는데 차트를 못 만드는</em> 상태다.
+        시간 컬럼이 없으니 시계열 차트도 못 만든다 — <em>쿼리는 되는데 차트를 못 만드는</em> 상태다.
       </p>
       <p class="card-note">
         테이블 10개 기준 비용은 사실상 같았다 — <code class="inline">SELECT … LIMIT 0</code> 109ms ·
@@ -1665,7 +1665,7 @@ code.inline {
       <code class="inline">superset:8088/*</code>, 정적 자산 경로가 가장 많이 깨진다), <strong>서비스 계정 세션 유지</strong>(첫 요청에서
       로그인하고 쿠키를 서버 쪽에 보관 — 브라우저에 Superset 쿠키를 내보내지 않는다),
       <strong>HTML 응답에만 <code class="inline">&lt;style&gt;</code> 주입</strong>(로고·네비·푸터 숨김, JSON·자산 응답은 손대지 않는다),
-      그리고 비동기 질의를 쓸 경우의 <strong>WebSocket 통과</strong>.
+      그리고 비동기 쿼리를 쓸 경우의 <strong>WebSocket 통과</strong>.
     </p>
 
     <div class="spectrum-divider"></div>
@@ -1922,7 +1922,7 @@ code.inline {
 
     <p>
       검증은 두 스크립트가 반복 실행 가능한 형태로 했다 —
-      <code class="inline">scripts/p0_duckdb_check.py</code>(Superset 없이 질의 경로만) 와
+      <code class="inline">scripts/p0_duckdb_check.py</code>(Superset 없이 쿼리만) 와
       <code class="inline">scripts/p0_superset_check.py</code>(Superset REST API).
       완료 조건은 화면이 아니라 <strong>확인 가능한 사실</strong>이다.
     </p>
@@ -1938,7 +1938,7 @@ code.inline {
               <td>dbt 모델 10개 전부 · reflection 9컬럼 정확 · 시간 컬럼 <code class="inline">event_ts</code> · <code class="inline">event_date</code> 인식 — <strong><code class="inline">DESCRIBE</code> 를 넣은 뒤에야</strong></td></tr>
           <tr><td><strong>② Superset 데이터셋</strong></td><td><span class="mark-keep">통과</span></td>
               <td>스키마 <code class="inline">ice.analytics</code> · 데이터셋 생성 · SQL Lab 결과가 플랫폼과 일치</td></tr>
-          <tr><td><strong>③ 동시 10 질의</strong></td><td><span class="mark-keep">통과</span></td>
+          <tr><td><strong>③ 동시 10 쿼리</strong></td><td><span class="mark-keep">통과</span></td>
               <td>오류 0건</td></tr>
           <tr><td><strong>③ 응답 시간</strong></td><td><span class="mark-drop">주의</span></td>
               <td>warm <strong>1.1ms</strong> / cold 단독 약 <strong>160ms</strong> / cold 동시 10 약 <strong>940ms</strong></td></tr>
@@ -1952,7 +1952,7 @@ code.inline {
       </table>
     </div>
     <p>
-      <strong>결론 — 후보 1로 간다.</strong> 추가 질의 엔진 없이 분석 기능이 선다. 되돌릴 사안은 없다.
+      <strong>결론 — 후보 1로 간다.</strong> 추가 쿼리 엔진 없이 분석 기능이 선다. 되돌릴 사안은 없다.
       다만 ③ 의 수치가 값지다. cold 와 warm 의 360배 차이는 <strong>커넥션 풀 재사용이 최적화가 아니라 전제</strong>라는 뜻이고,
       동시 10 접속에서 940ms 까지 오르는 것은 Iceberg REST 카탈로그가
       <code class="inline">CATALOG_JDBC_POOL__MAX__SIZE=1</code> 로 직렬화돼 있어서다 —
@@ -1968,7 +1968,7 @@ code.inline {
 B) commit 후 같은 커넥션     → 최신   (커넥션은 그대로, 트랜잭션만 끊음)
 C) 풀 반납 후 재사용         → 최신   ← Superset 의 실제 패턴</div>
     <p>
-      Superset 은 질의마다 커넥션을 풀에 반납하고 SQLAlchemy 는 반납 시 rollback 하므로,
+      Superset 은 쿼리마다 커넥션을 풀에 반납하고 SQLAlchemy 는 반납 시 rollback 하므로,
       <strong>다시 꺼낸 커넥션은 최신 스냅샷을 본다.</strong> 별도 대응이 필요하지 않다.
       지켜야 할 전제는 둘 — ① <code class="inline">pool_reset_on_return</code> 을 기본값(rollback)에서 바꾸지 않는다(바꾸면 A 가 된다),
       ② 트랜잭션을 열어둔 채 오래 붙잡는 코드를 만들지 않는다. 남는 낡음은 Superset 결과 캐시
@@ -2011,7 +2011,7 @@ SET GLOBAL TimeZone='UTC'  → 루트 · cursor 모두 UTC  (기존 cursor 까�
           </tr>
           <tr>
             <td>3</td><td><strong>워커별 DuckDB 인스턴스</strong></td><td><span class="mark-drop">잔존</span></td>
-            <td>메타데이터·데이터 캐시가 공유되지 않는다. 실패 징후는 질의 수에 비례한 MinIO 트래픽 선형 증가 또는 워커 메모리 누적. 보이면 후보 2(Quack)로 인스턴스를 하나로 모은다.</td>
+            <td>메타데이터·데이터 캐시가 공유되지 않는다. 실패 징후는 쿼리 수에 비례한 MinIO 트래픽 선형 증가 또는 워커 메모리 누적. 보이면 후보 2(Quack)로 인스턴스를 하나로 모은다.</td>
           </tr>
           <tr>
             <td>4</td><td><strong>Iceberg 카탈로그가 SQLite</strong></td><td><span class="mark-drop">관측됨</span></td>
@@ -2052,7 +2052,7 @@ SET GLOBAL TimeZone='UTC'  → 루트 · cursor 모두 UTC  (기존 cursor 까�
           <tr>
             <td><strong>P0</strong> <span class="mark-keep">완료</span></td>
             <td>Superset → DuckDB → Iceberg REST 만 검증. UI 를 만들지 않는다. 임시 포트로 관리 화면을 열어 ①~⑤ 만 확인.</td>
-            <td>다섯 항목 전부 통과 = 질의 경로 확정</td>
+            <td>다섯 항목 전부 통과 = 쿼리 확정</td>
           </tr>
           <tr>
             <td><strong>P1</strong> <span class="mark-keep">생략</span></td>
@@ -2084,7 +2084,7 @@ SET GLOBAL TimeZone='UTC'  → 루트 · cursor 모두 UTC  (기존 cursor 까�
     </div>
 
     <ul class="summary-list">
-      <li><strong>새 질의 엔진을 넣지 않는다.</strong> Superset 안의 DuckDB 가 <code class="inline">duckdb-engine</code> 으로 붙어 dbt 가 쓰는 그 Iceberg REST 카탈로그를 직접 <code class="inline">ATTACH</code> 한다. Trino · pg_duckdb · Quack 은 폐기가 아니라 후순위다.</li>
+      <li><strong>새 쿼리 엔진을 넣지 않는다.</strong> Superset 안의 DuckDB 가 <code class="inline">duckdb-engine</code> 으로 붙어 dbt 가 쓰는 그 Iceberg REST 카탈로그를 직접 <code class="inline">ATTACH</code> 한다. Trino · pg_duckdb · Quack 은 폐기가 아니라 후순위다.</li>
       <li><strong>직접 만드는 배관은 하나뿐이다</strong> — 접속마다 도는 초기화 훅. 가드는 클래스가 아니라 모듈(<code class="inline">duckdb_engine</code>)로 판별하고, <code class="inline">DESCRIBE</code> 로 컬럼을 해석시키고, <code class="inline">USE ice.analytics</code> 로 끝낸다. 셋 중 하나라도 빠지면 조용히 실패한다.</li>
       <li><strong>Superset 은 주소도 포트도 갖지 않는다.</strong> FastAPI 가 <code class="inline">/superset/*</code> 를 프록시하고 컨테이너는 호스트 포트를 바인딩하지 않는다 — 문서상의 약속이 아니라 compose 파일의 사실로 만든다.</li>
       <li><strong>대시보드는 공식 SDK, Explore 는 프록시다.</strong> 비대칭을 인정하고 화면별로 다른 경로를 쓴다. 비공식인 쪽은 화면 두 개에만 국한하고 리스크 5로 관리한다.</li>
