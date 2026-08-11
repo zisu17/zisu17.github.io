@@ -177,6 +177,23 @@ a:hover { color: var(--dz-accent-text-hover); }
   position: relative;
   z-index: 1;
 }
+.home-link {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--dz-space-8);
+  color: #B9BEC3;
+  font-size: 13px;
+  font-weight: 600;
+}
+.home-link::before {
+  content: '←';
+  font-size: 16px;
+  transition: transform var(--dz-dur) var(--dz-ease);
+}
+.home-link:hover { color: var(--dz-accent-soft); }
+.home-link:hover::before { transform: translateX(-3px); }
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -791,6 +808,7 @@ code.inline {
 <!-- ==================== HERO ==================== -->
 <header class="hero">
   <div class="hero-inner">
+    <a class="home-link" href="/">블로그 홈</a>
     <span class="hero-badge">Data Platform / Data Quality</span>
     <h1>데이터 품질 진단<br>페이지 설계</h1>
     <p class="excerpt">dbt 테스트는 «어떤 규칙이 몇 건 위반했는가»까지 답한다. 그 뒤 원인·영향·이력을 붙여 조치 순서까지 한 화면에서 확정하는 진단 화면의 설계.</p>

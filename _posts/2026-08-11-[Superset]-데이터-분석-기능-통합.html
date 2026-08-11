@@ -177,6 +177,23 @@ a:hover { color: var(--dz-accent-text-hover); }
   position: relative;
   z-index: 1;
 }
+.home-link {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--dz-space-8);
+  color: #B9BEC3;
+  font-size: 13px;
+  font-weight: 600;
+}
+.home-link::before {
+  content: '←';
+  font-size: 16px;
+  transition: transform var(--dz-dur) var(--dz-ease);
+}
+.home-link:hover { color: var(--dz-accent-soft); }
+.home-link:hover::before { transform: translateX(-3px); }
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -1007,6 +1024,7 @@ code.inline {
 <!-- ==================== HERO ==================== -->
 <header class="hero">
   <div class="hero-inner">
+    <a class="home-link" href="/">블로그 홈</a>
     <span class="hero-badge">Data Platform / Superset</span>
     <h1>Superset 기반<br>데이터 분석 기능 통합</h1>
     <p class="excerpt">Apache Superset 을 시각화 엔진으로 쓰되, 사용자에게는 두 번째 도구로 보이지 않게 한다. 메뉴 하나가 늘고, 데이터 모델 화면에서 분석으로 이어지고, 접속 주소는 여전히 하나다. 질의 경로는 후보 네 개 중 <em>가장 단순한 것부터</em> P0 에서 검증해 정했다 — 새 질의 엔진을 하나도 넣지 않는 1번이 다섯 항목 전부를 통과했다.</p>
