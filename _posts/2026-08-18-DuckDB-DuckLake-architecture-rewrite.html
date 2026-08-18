@@ -1,0 +1,326 @@
+---
+layout: none
+title: "데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유"
+excerpt: "데이터 규모에 비해 무거웠던 Spark와 Iceberg 중심 구조를 DuckDB와 DuckLake로 단순화한 과정과 결과를 정리한다."
+categories:
+  - Data
+tags:
+  - Data
+  - DuckDB
+  - DuckLake
+  - Iceberg
+  - PostgreSQL
+  - dbt
+permalink: /data/duckdb-ducklake-architecture-rewrite/
+date: 2026-08-18
+last_modified_at: 2026-08-18
+---
+
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유</title>
+<style>
+:root{
+  --bg:#ffffff; --text:#171717; --sub:#666; --line:#e7e7e7;
+  --soft:#f7f7f7; --dark:#111; --accent:#e85d04; --good:#197a3e;
+  --max:1180px; --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.78}
+a{color:inherit}
+.hero{background:#111;color:#fff;padding:88px 24px 72px}
+.wrap{max-width:var(--max);margin:0 auto}
+.home-link{display:block;width:max-content;margin-bottom:32px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.02em;text-decoration:none}
+.home-link:hover{color:#ff9a5f}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;color:#ff9a5f;margin-bottom:16px}
+h1{font-size:44px;line-height:1.2;letter-spacing:-.035em;margin:0 0 20px}
+.lead{max-width:760px;font-size:18px;line-height:1.75;color:#c9c9c9;margin:0}
+.meta{margin-top:26px;font-size:13px;color:#8f8f8f}
+nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+nav .wrap{display:flex;gap:6px;overflow:auto;padding:8px 20px}
+nav a{font-size:13px;font-weight:650;text-decoration:none;white-space:nowrap;padding:9px 11px;border-radius:6px}
+nav a:hover{background:#f3f3f3}
+section{padding:70px 24px;border-bottom:1px solid #f0f0f0}
+section:nth-of-type(even){background:#fafafa}
+.num{font:700 12px var(--mono);color:var(--accent);letter-spacing:.08em}
+h2{font-size:31px;line-height:1.3;letter-spacing:-.025em;margin:8px 0 28px}
+h3{font-size:21px;line-height:1.45;margin:42px 0 14px;letter-spacing:-.015em}
+p{font-size:16px;margin:0 0 18px}
+strong{font-weight:750}
+.callout{border-left:4px solid var(--accent);background:#fff7f1;padding:18px 20px;margin:28px 0;border-radius:0 6px 6px 0}
+.callout p{margin:0}
+.table-wrap{overflow:auto;margin:26px 0 32px;border:1px solid var(--line);border-radius:8px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:620px;font-size:14px}
+th{background:#171717;color:#fff;text-align:left;padding:13px 15px;font-weight:700}
+td{padding:13px 15px;border-top:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+code{font-family:var(--mono);font-size:.92em;background:#f1f1f1;padding:2px 5px;border-radius:4px}
+.arch{font-family:var(--mono);font-size:14px;line-height:1.75;background:#121212;color:#eee;padding:24px;border-radius:8px;overflow:auto;margin:28px 0;white-space:pre}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}
+.kpi{border:1px solid var(--line);background:#fff;padding:20px;border-radius:8px}
+.kpi b{display:block;font-size:25px;line-height:1.2;margin-bottom:8px}
+.kpi span{display:block;font-size:13px;color:var(--sub);line-height:1.5}
+.note{font-size:14px;color:var(--sub)}
+ul{padding-left:22px}
+li{margin:8px 0}
+footer{padding:42px 24px;background:#111;color:#777;text-align:center;font-size:13px}
+@media(max-width:760px){
+  h1{font-size:31px}
+  h2{font-size:25px}
+  .hero{padding:60px 20px 48px}
+  section{padding:54px 20px}
+  .kpis{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+<div class="wrap">
+<a class="home-link" href="/">What's your ETL?</a>
+<div class="eyebrow">DATA PLATFORM / DUCKLAKE</div>
+<h1>데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유</h1>
+<p class="lead">
+      작은 데이터 플랫폼에 Spark, Iceberg REST Catalog, DuckDB가 함께 들어가 있었다.
+      기능은 동작했지만 데이터 규모에 비해 실행 구조가 무거웠고, 변환과 조회가 서로 다른 엔진에 나뉘어 운영 복잡도도 커졌다.
+      이 글은 저장 계층과 실행 엔진을 다시 구성하면서 어떤 기준으로 구조를 줄였는지 정리한 기록이다.
+    </p>
+<div class="meta">2026.08.18 · Postgres · DuckDB · DuckLake · dbt</div>
+</div>
+</header>
+<nav>
+<div class="wrap">
+<a href="#s1">1. 기존 구조</a>
+<a href="#s2">2. 메타데이터 전환</a>
+<a href="#s3">3. 기술 검토</a>
+<a href="#s4">4. 전환 아키텍처</a>
+<a href="#s5">5. 결과와 한계</a>
+</div>
+</nav>
+<section id="s1">
+<div class="wrap">
+<div class="num">01</div>
+<h2>데이터 규모에 비해 무거웠던 실행 구조</h2>
+<p>
+      전환 전 웨어하우스는 약 113MB, 주요 팩트 테이블은 약 14만 행 규모였다.
+      이 정도 데이터에 비해 처리 계층은 꽤 복잡했다.
+      dbt 모델 변환은 Spark가 맡고, 저장 포맷은 Iceberg, 카탈로그는 별도 REST 서비스,
+      미리보기와 분석 조회는 DuckDB가 담당했다.
+    </p>
+<div class="arch">dbt
+  └─ Spark
+      └─ Iceberg REST Catalog
+          └─ Object Storage / Parquet
+
+API Preview
+  └─ DuckDB
+      └─ Iceberg REST Catalog
+
+BI / Analysis
+  └─ DuckDB
+      └─ Iceberg REST Catalog</div>
+<p>
+      가장 큰 문제는 Spark의 계산 성능이 아니라 실행 비용이었다.
+      dbt가 Spark를 호출할 때마다 JVM이 새로 올라왔고, 기동에 약 15초가 필요했다.
+      짧은 변환 작업에서도 실제 SQL 실행보다 JVM 시작 시간이 더 크게 느껴졌다.
+    </p>
+<p>
+      같은 데이터를 다루면서 변환은 Spark, 조회는 DuckDB, 적재는 별도 라이브러리를 사용했다.
+      각 계층이 다른 엔진과 접속 방식을 가지다 보니 의존성, 이미지 크기, 카탈로그 연결 설정도 함께 늘었다.
+      데이터가 커져서 복잡해진 구조라기보다, 선택한 기술 때문에 구조가 커진 상태에 가까웠다.
+    </p>
+<div class="callout">
+<p><strong>재설계 목표:</strong> 현재 데이터 규모에서 불필요한 런타임 비용을 줄이고, 변환과 조회 경로를 최대한 같은 엔진으로 맞춘다.</p>
+</div>
+</div>
+</section>
+<section id="s2">
+<div class="wrap">
+<div class="num">02</div>
+<h2>SQLite 메타데이터 계층의 Postgres 전환</h2>
+<p>
+      실행 엔진을 바꾸기 전에 메타데이터 저장소부터 정리했다.
+      플랫폼 메타스토어, Airflow 메타DB, Iceberg 카탈로그가 각각 SQLite를 사용하고 있었다.
+      단일 프로세스 환경에서는 간단했지만 쓰기가 겹치기 시작하면서 제약이 드러났다.
+    </p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>구성</th><th>SQLite 사용 시 제약</th><th>전환 후</th></tr>
+</thead>
+<tbody>
+<tr><td>플랫폼 메타스토어</td><td>동시 쓰기 시 대기 발생</td><td>Postgres</td></tr>
+<tr><td>Airflow 메타DB</td><td>SequentialExecutor 사용</td><td>Postgres + LocalExecutor</td></tr>
+<tr><td>Iceberg 카탈로그</td><td>동시 커밋에서 <code>SQLITE_BUSY</code></td><td>Postgres</td></tr>
+</tbody>
+</table>
+</div>
+<p>
+      DB를 서비스별로 하나씩 늘리기보다는 Postgres 인스턴스 하나에 데이터베이스를 분리하는 구성을 택했다.
+      세 저장소가 같은 호스트에서 함께 기동되고 종료되는 구조였기 때문에,
+      컨테이너을 각각 분리하는 것보다 운영 단위를 줄이는 쪽이 이 프로젝트에는 더 적합했다.
+    </p>
+<p>
+      이 단계에서 플랫폼 메타스토어 14개 테이블과 Iceberg 카탈로그 메타데이터를 옮겼고,
+      기존 테이블과 스냅샷 이력이 정상적으로 조회되는 것을 확인했다.
+      Airflow도 SequentialExecutor에서 LocalExecutor로 변경했다.
+    </p>
+<p class="note">
+      여기서 중요한 변화는 DB 제품을 바꿨다는 사실보다, 메타데이터 계층이 더 이상 SQLite의 단일 writer 제약에 묶이지 않게 된 점이었다.
+    </p>
+</div>
+</section>
+<section id="s3">
+<div class="wrap">
+<div class="num">03</div>
+<h2>처리 엔진 재선정을 위한 기준</h2>
+<p>
+      Postgres 전환 이후에도 dbt 빌드의 고정 비용은 남아 있었다.
+      Spark JVM 기동 약 15초를 없애려면 변환 엔진을 바꿔야 했지만,
+      단순히 더 빠른 엔진을 고르는 것으로는 부족했다.
+    </p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>조건</th><th>기준</th></tr>
+</thead>
+<tbody>
+<tr><td>미리보기 응답 시간 유지</td><td>기존 조회 함수 약 13.8ms, API 왕복 약 25ms</td></tr>
+<tr><td>정확 중위값 유지</td><td>대표 지표에서 정확 분위수 사용</td></tr>
+<tr><td>dbt 유지</td><td><code>manifest.json</code>을 플랫폼 메타데이터의 기준으로 사용</td></tr>
+<tr><td>로컬 구축 가능</td><td>외부 클라우드 서비스에 의존하지 않음</td></tr>
+</tbody>
+</table>
+</div>
+<h3>Trino 검토</h3>
+<p>
+      Trino는 Iceberg와의 호환성이 좋지만 별도 서버와 분산 쿼리 계층이 추가된다.
+      현재 데이터 규모에서는 분산 실행의 이점을 얻기 어렵고,
+      대표 지표에 필요한 정확 분위수 대신 근사 분위수 계열을 사용해야 한다는 점도 맞지 않았다.
+    </p>
+<h3>DuckDB + Iceberg 검토</h3>
+<p>
+      이미 조회 계층에서 DuckDB를 사용하고 있었기 때문에 변환까지 DuckDB로 통일하는 방향은 자연스러웠다.
+      다만 현재 환경의 DuckDB Iceberg 쓰기에서는 <code>CREATE OR REPLACE</code>를 사용할 수 없었다.
+    </p>
+<p>
+      모델 12개가 매 실행마다 전체 재생성되는 구조에서 <code>DROP</code> 후 <code>CREATE</code>를 사용하면
+      테이블이 잠깐 존재하지 않는 구간이 생긴다.
+      그 순간 미리보기나 차트 요청이 들어오면 조회 실패로 이어질 수 있어 운영 경로로 쓰기 어려웠다.
+    </p>
+<h3>DuckLake 채택</h3>
+<p>
+      DuckLake에서는 DuckDB가 변환 엔진과 카탈로그 접근을 함께 맡을 수 있었고,
+      기존 객체 저장소의 Parquet 기반 구조도 유지할 수 있었다.
+      게이트 테스트에서 <code>CREATE OR REPLACE</code> 동작과 기존 Iceberg 데이터의 이관 가능성을 확인한 뒤 전환 대상으로 정했다.
+    </p>
+</div>
+</section>
+<section id="s4">
+<div class="wrap">
+<div class="num">04</div>
+<h2>DuckDB + DuckLake 중심의 아키텍처 단순화</h2>
+<p>
+      전환 후에는 Spark와 Iceberg REST Catalog가 빠지고,
+      DuckDB가 dbt 변환과 조회를 담당한다.
+      DuckLake 메타데이터는 Postgres에 저장하고 데이터 파일은 기존 객체 저장소에 둔다.
+    </p>
+<div class="arch">dbt
+  └─ DuckDB
+      └─ DuckLake
+          ├─ Postgres Metadata
+          └─ Object Storage / Parquet
+
+API Preview
+  └─ DuckDB
+      └─ DuckLake
+
+BI / Analysis
+  └─ DuckDB
+      └─ DuckLake</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>역할</th><th>전환 전</th><th>전환 후</th></tr>
+</thead>
+<tbody>
+<tr><td>변환</td><td>Spark</td><td>DuckDB</td></tr>
+<tr><td>조회</td><td>DuckDB</td><td>DuckDB</td></tr>
+<tr><td>카탈로그</td><td>Iceberg REST + Postgres</td><td>DuckLake + Postgres</td></tr>
+<tr><td>데이터 파일</td><td>Object Storage / Parquet</td><td>Object Storage / Parquet</td></tr>
+<tr><td>정확 중위값</td><td><code>percentile</code></td><td><code>quantile_cont</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>
+      데이터 파일의 위치를 바꾸는 작업보다 실행 계층을 줄이는 작업에 가까웠다.
+      Java 런타임과 Spark 패키지, Spark 어댑터, 별도 Iceberg REST 서비스가 빠졌고
+      변환과 조회에서 사용하는 SQL 엔진도 하나로 정리됐다.
+    </p>
+<p>
+      엔진을 바꾼 뒤에는 결과 값이 같다는 확인이 더 중요했다.
+      특히 중위값을 사용하는 지표는 엔진별 함수 차이가 숫자 차이로 이어질 수 있어,
+      동일한 기간을 고정한 뒤 지역별 결과를 대조했다.
+      25개 지역에서 지표가 모두 일치했고, 이관한 33개 테이블의 행 수도 전부 맞았다.
+    </p>
+</div>
+</section>
+<section id="s5">
+<div class="wrap">
+<div class="num">05</div>
+<h2>전환 결과와 트레이드오프</h2>
+<div class="kpis">
+<div class="kpi"><b>133s → 23s</b><span>전체 dbt build</span></div>
+<div class="kpi"><b>13.8ms → 13.6ms</b><span>미리보기 조회</span></div>
+<div class="kpi"><b>4.88GB → 3.75GB</b><span>오케스트레이터 이미지</span></div>
+<div class="kpi"><b>33 / 33</b><span>이관 테이블 행 수 일치</span></div>
+</div>
+<p>
+      가장 큰 변화는 빌드 시간이었다.
+      Spark JVM 기동 비용이 사라지면서 전체 dbt build가 133초에서 약 23초로 줄었다.
+      반면 미리보기 조회는 13.8ms에서 13.6ms로 거의 변하지 않았다.
+      기존에 DuckDB가 맡고 있던 빠른 조회 경로를 그대로 유지했기 때문이다.
+    </p>
+<p>
+      이미지 크기도 4.88GB에서 3.75GB로 감소했다.
+      Java 런타임과 Spark 관련 패키지, 이벤트 로그 및 의존성 캐시가 빠진 영향이 컸다.
+      성능 수치뿐 아니라 배포 이미지와 운영 구성도 함께 줄었다.
+    </p>
+<h3>Iceberg 대비 상호운용성 축소</h3>
+<p>
+      DuckLake로 바꾸면서 모든 면이 좋아진 것은 아니다.
+      Iceberg의 장점은 여러 엔진이 같은 테이블 포맷을 공유할 수 있다는 점이다.
+      DuckLake는 현재 DuckDB 중심의 생태계에 더 가깝기 때문에,
+      다른 분산 엔진이 같은 테이블을 직접 읽어야 하는 환경이라면 같은 선택을 하기 어렵다.
+    </p>
+<p>
+      이 프로젝트에서는 Spark도 실제로 로컬 모드로 동작하고 있었고,
+      데이터 규모 역시 단일 노드에서 충분히 처리 가능한 수준이었다.
+      그래서 현재 사용하지 않는 분산 처리 가능성을 유지하는 것보다
+      지금 발생하고 있는 실행 비용과 운영 복잡도를 줄이는 쪽을 선택했다.
+    </p>
+<div class="callout">
+<p>
+<strong>적합했던 이유:</strong> DuckLake가 항상 Iceberg보다 낫기 때문이 아니라,
+        현재 데이터 규모와 실행 방식에서는 Spark와 Iceberg가 제공하는 확장성을 사용하지 않으면서 그 운영 비용만 지불하고 있었기 때문이다.
+      </p>
+</div>
+</div>
+</section>
+<footer>
+  Data Platform · DuckDB · DuckLake · Postgres · dbt
+</footer>
+<script>
+document.querySelectorAll('nav a').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>
+
