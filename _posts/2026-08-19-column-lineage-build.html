@@ -1,0 +1,1255 @@
+---
+layout: none
+title: "dbt 모델에 컬럼 레벨 리니지 구축하기"
+excerpt: "dbt 산출물과 카탈로그 정보를 SQLGlot으로 분석해 컬럼 간 의존 관계를 계산하고 PostgreSQL에 메타데이터로 저장한 과정을 정리한다."
+categories:
+  - Data
+tags:
+  - Data
+  - dbt
+  - Column Lineage
+  - SQLGlot
+  - PostgreSQL
+  - Metadata
+permalink: /data/column-lineage-build/
+date: 2026-08-19
+last_modified_at: 2026-08-19
+---
+
+<!DOCTYPE html>
+
+<html lang="ko-KR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>dbt 모델에 컬럼 레벨 리니지 구축하기</title>
+<link href="https://cdn.jsdelivr.net" rel="preconnect"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<style>
+:root {
+  /* Accent — zisu17.github.io 링크 색 계열. 장식 전용 */
+  --dz-accent: #FF6C02;
+  --dz-accent-soft: #FF984E;
+
+  /* Accent for text — 밝은 배경 위 텍스트용 (WCAG AA 4.5:1 이상) */
+  --dz-accent-text: #C24E00;
+  --dz-accent-text-hover: #9C3D00;
+  --dz-accent-code: #B04600;
+
+  /* Surfaces & neutrals — 블로그의 흰 배경 + 무채색 계열 */
+  --dz-bg-white: #FFFFFF;
+  --dz-bg-tint: #F8F9F9;
+  --dz-bg-dark: #0F0F0F;
+  --dz-surface: #FFFFFF;
+  --dz-heading: #000000;
+  --dz-text: #101010;
+  --dz-text-sub: #5A6169;
+  --dz-text-on-dark: #FFFFFF;
+  --dz-line: #E3E5E8;
+  --dz-muted: #8B9198;
+
+  /* Code surfaces — 블로그의 라이트 코드 블록 */
+  --dz-code-bg: #F6F7F8;
+  --dz-code-head: #EDEFF2;
+  --dz-code-line: #E3E5E8;
+  --dz-code-text: #101010;
+
+  /* Gradients — 얇은 장식 요소에만 */
+  --dz-grad-accent: linear-gradient(135deg, #E05A00 0%, #FF984E 100%);
+  --dz-grad-spectrum: linear-gradient(90deg, #FF984E 0%, #FF6C02 50%, #E05A00 100%);
+
+  /* Spacing */
+  --dz-space-1: 4px;
+  --dz-space-2: 8px;
+  --dz-space-3: 12px;
+  --dz-space-4: 16px;
+  --dz-space-6: 24px;
+  --dz-space-8: 32px;
+  --dz-space-12: 48px;
+  --dz-space-16: 64px;
+  --dz-space-24: 96px;
+
+  /* Radius — 블로그의 4px 기조에 맞춘 플랫한 값 */
+  --dz-radius-sm: 4px;
+  --dz-radius-md: 6px;
+  --dz-radius-lg: 8px;
+  --dz-radius-pill: 9999px;
+  --dz-container: 1180px;
+
+  /* Shadows — 블로그의 미세한 그림자 */
+  --dz-shadow-card: 0 1px 2px rgba(16,16,16,0.05), 0 1px 1px rgba(189,193,196,0.25);
+  --dz-shadow-card-hover: 0 4px 14px rgba(16,16,16,0.10);
+  --dz-shadow-card-dark: 0 4px 18px rgba(0,0,0,0.35);
+
+  /* Typography — 블로그와 동일한 폰트 스택 */
+  --dz-font-sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Montserrat", "Pretendard", "Merriweather", sans-serif;
+  --dz-font-mono: "Fira Mono", "Pretendard", Monaco, Consolas, "Lucida Console", monospace;
+
+  /* Motion */
+  --dz-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dz-dur: 220ms;
+  --dz-dur-slow: 400ms;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--dz-font-sans);
+  font-weight: 400;
+  line-height: 1.8;
+  color: var(--dz-text);
+  background: var(--dz-bg-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+em, i { font-style: normal; font-weight: 600; }
+
+a { color: var(--dz-accent-text); text-decoration: none; transition: color var(--dz-dur) var(--dz-ease); }
+a:hover { color: var(--dz-accent-text-hover); }
+
+/* ---------- Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .fade-up { opacity: 1 !important; transform: none !important; }
+}
+
+/* ---------- Utilities ---------- */
+.mt-6 { margin-top: var(--dz-space-6); }
+.mb-0 { margin-bottom: 0 !important; }
+
+/* 상태 칩 — 배경색과 무관하게 대비를 보장한다 */
+.mark-keep, .mark-drop {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: var(--dz-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.mark-keep { background: #DFF3E4; color: #1F7A3D; }
+.mark-drop { background: #FDE4E3; color: #C0272D; }
+
+/* ---------- Scroll Progress Bar ---------- */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: var(--dz-grad-spectrum);
+  z-index: 200;
+  transition: width 80ms linear;
+}
+
+/* ---------- Hero (Dark) ---------- */
+.hero {
+  /* 상단이 살짝 따뜻하게 들리는 미세한 세로 그라데이션 */
+  background: linear-gradient(180deg, #171310 0%, var(--dz-bg-dark) 62%);
+  color: var(--dz-text-on-dark);
+  padding: var(--dz-space-24) 0 var(--dz-space-16);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -20%;
+  width: 700px; height: 700px;
+  /* 오렌지는 블루보다 휘도가 2배 높아 같은 존재감이 되도록 0.15로 잡았다 */
+  background: radial-gradient(circle, rgba(255, 108, 2, 0.15) 0%, transparent 62%);
+  border-radius: 50%;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--dz-grad-spectrum);
+}
+.hero-inner {
+  max-width: var(--dz-container);
+  margin: 0 auto;
+  padding: 0 var(--dz-space-8);
+  position: relative;
+  z-index: 1;
+}
+.home-link {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  margin-bottom: var(--dz-space-8);
+  color: var(--dz-text-on-dark);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.home-link:hover { color: var(--dz-accent-soft); }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 108, 2, 0.12);
+  border: 1px solid rgba(255, 108, 2, 0.32);
+  color: var(--dz-accent-soft);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: var(--dz-radius-pill);
+  margin-bottom: var(--dz-space-6);
+}
+.hero h1 {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: var(--dz-space-6);
+  letter-spacing: -0.02em;
+}
+.hero .excerpt {
+  font-size: 17px;
+  font-weight: 400;
+  color: #B9BEC3;
+  max-width: 780px;
+  line-height: 1.75;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dz-space-2);
+  margin-top: var(--dz-space-8);
+}
+.hero-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: #B9BEC3;
+  background: rgba(255,255,255,0.06);
+  padding: 5px 12px;
+  border-radius: var(--dz-radius-pill);
+  border: 1px solid rgba(255,255,255,0.10);
+  transition: all var(--dz-dur) var(--dz-ease);
+}
+.hero-tag:hover {
+  background: rgba(255, 108, 2, 0.15);
+  border-color: rgba(255, 108, 2, 0.35);
+  color: var(--dz-accent-soft);
+}
+.hero-date {
+  font-size: 13px;
+  color: var(--dz-muted);
+  margin-top: var(--dz-space-6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero-date::before {
+  content: '';
+  width: 20px; height: 1px;
+  background: var(--dz-muted);
+  opacity: 0.6;
+}
+
+/* ---------- Navigation ---------- */
+.nav {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: saturate(180%) blur(8px);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid var(--dz-line);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-inner {
+  max-width: var(--dz-container);
+  margin: 0 auto;
+  padding: var(--dz-space-2) var(--dz-space-8);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dz-space-1);
+  align-items: center;
+}
+.nav a {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3D4144;
+  padding: 0 14px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--dz-radius-sm);
+  transition: all var(--dz-dur) var(--dz-ease);
+}
+.nav a:hover {
+  background: rgba(255, 108, 2, 0.08);
+  color: var(--dz-accent-text);
+}
+.nav a.active {
+  background: var(--dz-grad-accent);
+  color: #fff;
+}
+
+/* ---------- Section ---------- */
+.section { padding: var(--dz-space-16) 0; }
+.section-dark { background: var(--dz-bg-dark); color: var(--dz-text-on-dark); }
+.section-light { background: var(--dz-bg-white); }
+.section-surface { background: var(--dz-bg-tint); }
+
+.section-inner {
+  max-width: var(--dz-container);
+  margin: 0 auto;
+  padding: 0 var(--dz-space-8);
+}
+
+.section-header { margin-bottom: var(--dz-space-12); }
+.section-num {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dz-accent-text);
+  margin-bottom: var(--dz-space-2);
+  letter-spacing: 0.08em;
+}
+.section-dark .section-num { color: var(--dz-accent-soft); }
+
+.section h2 {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--dz-space-4);
+  color: var(--dz-heading);
+}
+.section-dark h2 { color: var(--dz-text-on-dark); }
+
+.section-divider {
+  width: 48px;
+  height: 3px;
+  background: var(--dz-grad-accent);
+  border-radius: var(--dz-radius-pill);
+  margin-top: var(--dz-space-4);
+}
+.section-dark .section-divider { background: var(--dz-grad-spectrum); }
+
+.section h3 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: var(--dz-space-12);
+  margin-bottom: var(--dz-space-4);
+  color: var(--dz-heading);
+  display: flex;
+  align-items: center;
+  gap: var(--dz-space-3);
+}
+.section-dark h3 { color: var(--dz-text-on-dark); }
+
+.section h3::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 20px;
+  background: var(--dz-accent);
+  border-radius: var(--dz-radius-pill);
+  flex-shrink: 0;
+}
+
+.section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: var(--dz-space-8);
+  margin-bottom: var(--dz-space-3);
+  color: var(--dz-heading);
+}
+.section-dark h4 { color: var(--dz-accent-soft); }
+
+.section p {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: var(--dz-space-4);
+  color: var(--dz-text);
+}
+.section-dark p { color: rgba(255,255,255,0.84); }
+
+.section ul, .section ol {
+  margin: var(--dz-space-4) 0 var(--dz-space-4) var(--dz-space-6);
+}
+.section li {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: var(--dz-space-2);
+  color: var(--dz-text);
+}
+.section-dark li { color: rgba(255,255,255,0.84); }
+
+.section strong { font-weight: 700; color: var(--dz-heading); }
+.section-dark strong { color: var(--dz-text-on-dark); }
+
+.section blockquote {
+  border-left: 4px solid var(--dz-accent);
+  padding: var(--dz-space-3) var(--dz-space-6);
+  margin: var(--dz-space-6) 0;
+  background: rgba(255, 108, 2, 0.10);
+  border-radius: 0 var(--dz-radius-sm) var(--dz-radius-sm) 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--dz-text);
+}
+.section-dark blockquote {
+  background: rgba(255, 108, 2, 0.14);
+  color: rgba(255,255,255,0.92);
+}
+
+code.inline {
+  background: #F2F2F2;
+  padding: 2px 6px;
+  border-radius: var(--dz-radius-sm);
+  font-size: 14px;
+  color: var(--dz-accent-code);
+  font-family: var(--dz-font-mono);
+}
+.section-dark code.inline {
+  background: rgba(255,255,255,0.10);
+  color: var(--dz-accent-soft);
+}
+
+/* ---------- Code Block (light, 블로그와 동일 기조) ---------- */
+.code-block {
+  background: var(--dz-code-bg);
+  border: 1px solid var(--dz-code-line);
+  border-radius: var(--dz-radius-md);
+  margin: var(--dz-space-6) 0;
+  overflow: hidden;
+}
+.code-block::before {
+  content: attr(data-lang);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dz-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--dz-space-2) var(--dz-space-6);
+  background: var(--dz-code-head);
+  border-bottom: 1px solid var(--dz-code-line);
+}
+.code-block pre {
+  font-family: var(--dz-font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--dz-code-text);
+  white-space: pre;
+  padding: var(--dz-space-6);
+  overflow-x: auto;
+}
+.code-block .kw  { color: #CF222E; }
+.code-block .str { color: #0A3069; }
+.code-block .num { color: #0550AE; }
+.code-block .com { color: #5A6169; }
+.code-block .fn  { color: #8250DF; }
+.code-block .op  { color: #953800; }
+
+/* ---------- Table (다크 섹션 위에서도 라이트로 렌더링) ---------- */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: var(--dz-space-6) 0;
+  border-radius: var(--dz-radius-md);
+}
+.table-scroll .dz-table { margin: 0; min-width: 560px; }
+
+.dz-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--dz-space-6) 0;
+  border-radius: var(--dz-radius-md);
+  overflow: hidden;
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-line);
+  font-size: 14px;
+}
+.dz-table thead {
+  background: #101010;
+}
+.dz-table thead th {
+  color: var(--dz-text-on-dark);
+  font-weight: 700;
+  font-size: 13px;
+  padding: var(--dz-space-3) var(--dz-space-6);
+  text-align: left;
+  border-bottom: 3px solid var(--dz-accent);
+  white-space: nowrap;
+}
+/* 강조 카드 안의 표(권장 설정 표) — 헤더를 메인 주황 #FF6C02로.
+   이 면 위에서 흰 글자는 2.8:1로 AA 미달이므로 글자를 진갈색(6.1:1)으로 쓴다 */
+.dz-card-accent .dz-table thead {
+  background: var(--dz-accent);
+}
+.dz-card-accent .dz-table thead th {
+  color: #331100;
+  border-bottom-color: rgba(51,17,0,0.30);
+}
+.dz-table tbody tr {
+  border-bottom: 1px solid var(--dz-line);
+  transition: background var(--dz-dur) var(--dz-ease);
+}
+.dz-table tbody tr:last-child { border-bottom: none; }
+.dz-table tbody tr:nth-child(even) {
+  background: var(--dz-bg-tint);
+}
+.dz-table tbody tr:hover {
+  background: rgba(255, 108, 2, 0.07);
+}
+.dz-table td {
+  padding: var(--dz-space-3) var(--dz-space-6);
+  color: var(--dz-text);
+  line-height: 1.6;
+  vertical-align: top;
+}
+.dz-table td strong { color: var(--dz-heading); }
+.section-dark .dz-table { border-color: rgba(255,255,255,0.12); }
+/* 다크 섹션 안에서도 흰 면으로 렌더링되는 요소들(표·카드·목록) —
+   텍스트를 라이트 기준으로 되돌린다. 안 하면 밝은 글자가 흰 면에 얹혀 씻겨 보인다. */
+.section-dark .dz-table,
+.section-dark .dz-card,
+.section-dark .info-card,
+.section-dark .summary-list li { color: var(--dz-text); }
+.section-dark .dz-table p,
+.section-dark .dz-card p,
+.section-dark .dz-card li,
+.section-dark .info-card p,
+.section-dark .summary-list li { color: var(--dz-text); }
+.section-dark .dz-table strong,
+.section-dark .dz-card strong,
+.section-dark .info-card strong,
+.section-dark .summary-list strong { color: var(--dz-heading); }
+.section-dark .dz-table code.inline,
+.section-dark .dz-card code.inline,
+.section-dark .info-card code.inline,
+.section-dark .summary-list code.inline {
+  background: #F2F2F2;
+  color: var(--dz-accent-code);
+}
+
+
+/* ---------- Card ---------- */
+.dz-card {
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-line);
+  border-radius: var(--dz-radius-lg);
+  box-shadow: var(--dz-shadow-card);
+  padding: var(--dz-space-8);
+  margin: var(--dz-space-6) 0;
+  transition: box-shadow var(--dz-dur-slow) var(--dz-ease);
+}
+.dz-card:hover { box-shadow: var(--dz-shadow-card-hover); }
+.dz-card > h4:first-child { margin-top: 0; }
+
+/* 블로그 .notice 스타일 */
+.dz-card-accent {
+  background: var(--dz-bg-tint);
+  border: 1px solid var(--dz-line);
+  border-left: 4px solid var(--dz-accent);
+  border-radius: var(--dz-radius-md);
+  box-shadow: var(--dz-shadow-card);
+  padding: var(--dz-space-6) var(--dz-space-8);
+  margin: var(--dz-space-6) 0;
+}
+.dz-card-accent h4 {
+  color: var(--dz-heading);
+  margin-top: 0;
+}
+.dz-card-accent p { color: var(--dz-text); }
+.dz-card-accent .card-note {
+  margin-top: var(--dz-space-4);
+  margin-bottom: 0;
+  font-size: 13px;
+  color: var(--dz-text-sub);
+}
+.section-dark .dz-card-accent {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.10);
+  border-left-color: var(--dz-accent);
+  box-shadow: var(--dz-shadow-card-dark);
+}
+.section-dark .dz-card-accent h4 { color: var(--dz-accent-soft); }
+.section-dark .dz-card-accent p { color: rgba(255,255,255,0.86); }
+.section-dark .dz-card-accent .card-note { color: var(--dz-muted); }
+
+/* ---------- Architecture Diagram / Formula Box ---------- */
+.arch, .formula-box {
+  background: var(--dz-code-bg);
+  border: 1px solid var(--dz-code-line);
+  border-radius: var(--dz-radius-md);
+  padding: var(--dz-space-6) var(--dz-space-8);
+  margin: var(--dz-space-6) 0;
+  color: var(--dz-code-text);
+  font-family: var(--dz-font-mono);
+  font-size: 13.5px;
+  white-space: pre;
+  overflow-x: auto;
+}
+.arch { line-height: 1.85; }
+.formula-box { line-height: 2.1; }
+
+/* ---------- Figure (인라인 SVG 도해 — 표·코드처럼 항상 라이트 면 위에서 렌더링) ---------- */
+.dz-figure { margin: var(--dz-space-8) 0; }
+.dz-figure .figure-box {
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-line);
+  border-radius: var(--dz-radius-lg);
+  padding: var(--dz-space-6) var(--dz-space-4);
+  overflow-x: auto;
+  color: var(--dz-text);
+}
+.dz-figure svg { display: block; width: 100%; min-width: 520px; height: auto; }
+.dz-figure figcaption {
+  margin-top: var(--dz-space-3);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--dz-text-sub);
+}
+.dz-figure figcaption strong { color: var(--dz-text); }
+.section-dark .dz-figure .figure-box { border-color: rgba(255,255,255,0.12); color: var(--dz-text); }
+.section-dark .dz-figure figcaption { color: rgba(255,255,255,0.72); }
+.section-dark .dz-figure figcaption strong { color: var(--dz-text-on-dark); }
+/* 도해 의미색 — mark-keep/mark-drop 과 같은 값 */
+.dz-figure .f-accent { fill: var(--dz-accent-text); }
+.dz-figure .s-accent { stroke: var(--dz-accent-text); }
+.dz-figure .f-good { fill: #1F7A3D; }
+.dz-figure .s-good { stroke: #1F7A3D; }
+.dz-figure .f-warn { fill: #B45309; }
+.dz-figure .s-warn { stroke: #B45309; }
+.dz-figure .f-bad { fill: #C0272D; }
+.dz-figure .s-bad { stroke: #C0272D; }
+/* 도해 안 텍스트 등급 */
+.dz-figure .svg-l { font-family: var(--dz-font-mono); font-size: 10px; }
+.dz-figure .svg-t { font-size: 12px; font-weight: 600; }
+.dz-figure .svg-s { font-size: 10.5px; }
+
+/* ---------- Grid ---------- */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--dz-space-6);
+  margin: var(--dz-space-6) 0;
+}
+@media (max-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 27px; }
+  .section h2 { font-size: 23px; }
+  .section h3 { font-size: 18px; }
+  .hero { padding: var(--dz-space-16) 0 var(--dz-space-12); }
+  .section { padding: var(--dz-space-12) 0; }
+  .section-inner { padding: 0 var(--dz-space-4); }
+  .nav-inner { padding: var(--dz-space-2) var(--dz-space-4); }
+  .nav a { font-size: 12px; padding: 0 10px; }
+  .dz-card { padding: var(--dz-space-6); }
+  .dz-card-accent { padding: var(--dz-space-4) var(--dz-space-6); }
+  .code-block pre { font-size: 12px; padding: var(--dz-space-4); }
+  .arch, .formula-box { padding: var(--dz-space-4); }
+}
+
+/* ---------- Divider ---------- */
+.spectrum-divider {
+  height: 1px;
+  background: var(--dz-line);
+  margin: var(--dz-space-12) 0;
+}
+.section-dark .spectrum-divider { background: rgba(255,255,255,0.12); }
+
+/* ---------- Info Card Grid ---------- */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--dz-space-4);
+  margin: var(--dz-space-8) 0;
+}
+.info-card {
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-line);
+  border-radius: var(--dz-radius-lg);
+  padding: var(--dz-space-6);
+  box-shadow: var(--dz-shadow-card);
+  transition: transform var(--dz-dur-slow) var(--dz-ease), box-shadow var(--dz-dur-slow) var(--dz-ease);
+  position: relative;
+  overflow: hidden;
+}
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--dz-grad-accent);
+  opacity: 0;
+  transition: opacity var(--dz-dur) var(--dz-ease);
+}
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--dz-shadow-card-hover);
+}
+.info-card:hover::before { opacity: 1; }
+.info-card .icon {
+  width: 32px; height: 32px;
+  border-radius: var(--dz-radius-sm);
+  background: var(--dz-grad-accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff;
+  margin-bottom: var(--dz-space-4);
+}
+.info-card h5 {
+  font-size: 16px; font-weight: 700; color: var(--dz-heading);
+  margin-bottom: var(--dz-space-2);
+  line-height: 1.4;
+}
+.info-card p { font-size: 15px; color: var(--dz-text); line-height: 1.7; margin: 0; }
+
+/* ---------- Summary List ---------- */
+.summary-list {
+  list-style: none;
+  margin: var(--dz-space-6) 0;
+  padding: 0;
+}
+.summary-list li {
+  position: relative;
+  padding: var(--dz-space-3) var(--dz-space-4) var(--dz-space-3) var(--dz-space-8);
+  margin-bottom: var(--dz-space-2);
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--dz-text);
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-line);
+  border-radius: var(--dz-radius-sm);
+  transition: border-color var(--dz-dur) var(--dz-ease), box-shadow var(--dz-dur) var(--dz-ease);
+}
+.summary-list li:hover {
+  border-color: var(--dz-accent);
+  box-shadow: var(--dz-shadow-card);
+}
+.summary-list li::before {
+  content: '';
+  position: absolute;
+  left: 16px; top: 25px;
+  width: 14px; height: 3px;
+  background: var(--dz-grad-accent);
+  border-radius: var(--dz-radius-pill);
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  background: var(--dz-bg-dark);
+  color: var(--dz-muted);
+  padding: var(--dz-space-12) 0;
+  text-align: center;
+  position: relative;
+}
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--dz-grad-spectrum);
+}
+.footer-inner {
+  max-width: var(--dz-container);
+  margin: 0 auto;
+  padding: 0 var(--dz-space-8);
+}
+.footer p { font-size: 13px; color: var(--dz-muted); line-height: 1.7; }
+.footer p + p { margin-top: 6px; }
+
+/* ---------- Back to Top ---------- */
+.back-to-top {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  width: 44px; height: 44px;
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-line);
+  border-radius: var(--dz-radius-pill);
+  box-shadow: var(--dz-shadow-card-hover);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--dz-dur) var(--dz-ease);
+  z-index: 90;
+}
+.back-to-top.visible { opacity: 1; pointer-events: auto; }
+.back-to-top:hover {
+  background: var(--dz-grad-accent);
+  border-color: transparent;
+}
+.back-to-top:hover svg { stroke: #fff; }
+.back-to-top svg {
+  width: 20px; height: 20px;
+  stroke: #3D4144;
+  stroke-width: 2.5;
+  fill: none;
+  transition: stroke var(--dz-dur) var(--dz-ease);
+}
+
+/* ---------- Fade-up ---------- */
+.fade-up { opacity: 0; transform: translateY(16px); transition: all 0.5s var(--dz-ease); }
+.fade-up.is-in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<!-- Scroll Progress -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="/">What's your ETL?</a>
+    <span class="hero-badge">Data Platform / Column Lineage</span>
+    <h1>dbt 모델에<br>컬럼 레벨 리니지 구축하기</h1>
+    <p class="excerpt">테이블 단위 의존 관계만 있던 데이터 플랫폼에 컬럼 단위 계보를 추가했다. dbt 산출물과 카탈로그에서 분석에 필요한 정보를 모으고, SQLGlot으로 컬럼 간 의존 관계를 계산한 뒤 PostgreSQL에 메타데이터로 저장해 상·하류 컬럼을 조회할 수 있는 구조를 만들었다.</p>
+    <div class="hero-meta">
+      <span class="hero-tag">Data Platform</span>
+      <span class="hero-tag">Column Lineage</span>
+      <span class="hero-tag">SQLGlot</span>
+      <span class="hero-tag">dbt</span>
+      <span class="hero-tag">PostgreSQL</span>
+    </div>
+    <p class="hero-date">2026-08-19</p>
+  </div>
+</header>
+
+<!-- ==================== NAV ==================== -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#sec-1" data-target="sec-1">1. 시작점</a>
+    <a href="#sec-2" data-target="sec-2">2. 입력 수집</a>
+    <a href="#sec-3" data-target="sec-3">3. 계보 계산</a>
+    <a href="#sec-4" data-target="sec-4">4. 메타데이터 저장</a>
+    <a href="#sec-5" data-target="sec-5">5. 계보 조회</a>
+    <a href="#sec-6" data-target="sec-6">6. 증분 갱신</a>
+    <a href="#sec-7" data-target="sec-7">7. 안전장치·한계</a>
+  </div>
+</nav>
+
+<!-- ==================== SECTION 1 ==================== -->
+<section class="section section-light" id="sec-1">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>테이블 계보에서 컬럼 계보로</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>Data Mates에는 dbt의 <code class="inline">manifest.json</code>을 기반으로 모델 간 의존 관계를 보여 주는 테이블 레벨 리니지가 있었다. <code class="inline">ref()</code>를 따라가면 어떤 모델이 어떤 모델을 참조하는지는 알 수 있었지만, 그 안의 컬럼이 어디에서 왔는지는 알 수 없었다.</p>
+
+    <p>예를 들어 마트의 <code class="inline">signal_state</code>가 어떤 원천 컬럼에서 만들어졌는지, 스테이징 모델의 특정 컬럼을 수정했을 때 어떤 하류 컬럼이 영향을 받는지를 확인하려면 결국 모델 SQL을 직접 따라가야 했다. 모델이 여러 단계의 CTE와 조인으로 이어지면 사람이 추적하기도 어려워진다.</p>
+
+    <div class="arch">기존
+raw_orders ──▶ stg_orders ──▶ mart_orders
+
+알 수 있는 것   : 어떤 모델이 어떤 모델을 참조하는가
+알 수 없는 것   : mart_orders.amount 가 어느 컬럼에서 만들어졌는가</div>
+
+    <p>그래서 컬럼 단위 관계를 별도의 기능이 아니라 <strong>플랫폼이 관리하는 메타데이터</strong>로 구축하기로 했다. 목표는 단순히 화면에 선을 하나 더 그리는 것이 아니라, 한 번 계산한 컬럼 의존 관계를 저장하고 여러 화면에서 재사용할 수 있게 만드는 것이었다.</p>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="icon">1</div><h5>출처 추적</h5><p>선택한 컬럼이 어떤 상류 컬럼에서 만들어졌는지 역방향으로 확인한다.</p></div>
+      <div class="info-card"><div class="icon">2</div><h5>영향 범위</h5><p>컬럼 변경 시 어떤 하류 모델과 컬럼까지 영향을 받을 수 있는지 확인한다.</p></div>
+      <div class="info-card"><div class="icon">3</div><h5>공통 메타데이터</h5><p>계보 결과를 저장해 모델, 마트, 품질 정보와 같은 식별자로 결합한다.</p></div>
+    </div>
+
+    <div class="dz-card-accent">
+      <h4>구축 대상</h4>
+      <p class="mb-0">본문의 모델명과 컬럼명은 예시로 바꿨다. 실제 테스트 대상은 모델 13개, 모델·원천·seed를 포함한 노드 20개, 컬럼 452개였고 최종적으로 컬럼 간 의존 관계 676개를 구축했다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 2 ==================== -->
+<section class="section section-dark" id="sec-2">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>계보 계산에 필요한 입력 모으기</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>컬럼 리니지는 SQL만 파싱한다고 완성되지 않는다. SQL 안의 <code class="inline">select *</code>를 실제 컬럼 목록으로 풀고, <code class="inline">ref()</code>가 가리키는 관계를 실제 모델과 연결하려면 dbt가 이미 알고 있는 메타데이터를 함께 사용해야 한다.</p>
+
+    <div class="table-scroll">
+      <table class="dz-table">
+        <thead><tr><th>입력</th><th>사용 목적</th></tr></thead>
+        <tbody>
+          <tr><td><strong>manifest.json</strong></td><td>모델·source·seed 식별자, 모델 간 의존 관계, 선언된 컬럼 정보</td></tr>
+          <tr><td><strong>target/compiled/</strong></td><td>Jinja와 <code class="inline">ref()</code>가 해소된 실제 분석 대상 SQL</td></tr>
+          <tr><td><strong>models/*.sql</strong></td><td>compiled SQL이 없을 때 사용하는 폴백 SQL</td></tr>
+          <tr><td><strong>catalog.json</strong></td><td>relation별 실제 컬럼과 데이터 타입을 SQLGlot schema로 구성</td></tr>
+          <tr><td><strong>플랫폼 모델 메타데이터</strong></td><td>모델 ID를 기준으로 저장 결과를 Data Mates의 모델·마트 정보와 연결</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>분석 SQL은 가능하면 dbt가 만들어 둔 compiled SQL을 우선 사용했다. 원본 모델 SQL에는 Jinja, <code class="inline">ref()</code>, <code class="inline">source()</code>, <code class="inline">is_incremental()</code> 같은 dbt 문법이 남아 있어 SQL 파서가 그대로 해석하기 어렵기 때문이다.</p>
+
+    <div class="arch">dbt project
+├─ manifest.json       ─┐
+├─ target/compiled/*.sql ├─▶ Lineage Input
+├─ models/*.sql          │
+└─ catalog.json        ───┘
+                         │
+                         ▼
+                relation / schema / SQL</div>
+
+    <h3>2.1 SQL dialect 고정</h3>
+    <p>Data Mates의 모델 SQL은 DuckDB 문법을 기준으로 실행하므로 SQLGlot에도 <code class="inline">duckdb</code> dialect를 명시했다. 같은 SQL이라도 DB별 확장 문법에 따라 AST가 달라질 수 있기 때문에 계보를 계산하는 시점부터 실행 엔진과 같은 문법 규칙을 사용한다.</p>
+
+    <div class="code-block" data-lang="Python"><pre>SQL_DIALECT = <span class="str">"duckdb"</span>
+
+lineage = sg_lineage(
+    <span class="kw">None</span>,
+    compiled_sql,
+    schema=schema,
+    dialect=SQL_DIALECT,
+)</pre></div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 3 ==================== -->
+<section class="section section-surface" id="sec-3">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>SQLGlot으로 컬럼 의존 관계 계산하기</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>입력을 준비한 뒤 각 모델의 compiled SQL을 SQLGlot으로 파싱한다. SQLGlot은 SQL을 AST로 변환하고, 출력 컬럼이 어떤 테이블과 컬럼 표현식에 의존하는지 추적한다. 이 과정에서 단순 복사뿐 아니라 CTE, 조인, <code class="inline">CASE</code>, <code class="inline">CAST</code>, 함수, 산술 연산처럼 여러 입력이 하나의 출력 컬럼을 만드는 관계도 함께 얻을 수 있다.</p>
+
+    <div class="code-block" data-lang="SQL"><pre><span class="kw">SELECT</span>
+    category_code,
+    price * quantity <span class="kw">AS</span> amount,
+    <span class="kw">CASE WHEN</span> price &gt; <span class="num">100</span> <span class="kw">THEN</span> <span class="str">'HIGH'</span> <span class="kw">ELSE</span> <span class="str">'NORMAL'</span> <span class="kw">END AS</span> price_band
+<span class="kw">FROM</span> stg_orders;</pre></div>
+
+    <p>위와 같은 SQL을 분석하면 결과를 화면용 그래프로 바로 만들지 않고, 먼저 아래처럼 컬럼 간의 최소 의존 관계로 정규화한다.</p>
+
+    <div class="arch">stg_orders.category_code ─────────────▶ mart_orders.category_code
+
+stg_orders.price ───────┐
+                        ├─────────▶ mart_orders.amount
+stg_orders.quantity ────┘
+
+stg_orders.price ─────────────────▶ mart_orders.price_band</div>
+
+    <p><code class="inline">amount</code>처럼 여러 입력 컬럼이 하나의 출력 컬럼에 기여하면 source별로 간선을 각각 저장한다. 원본 표현식도 함께 남겨 두면 단순 연결뿐 아니라 어떤 계산을 거쳐 만들어졌는지도 확인할 수 있다.</p>
+
+    <h3>3.1 모델 ID 기준으로 관계 정규화</h3>
+    <p>SQLGlot이 반환한 relation 이름은 dbt manifest의 모델·source·seed와 대조해 Data Mates의 모델 ID로 정규화한다. 물리 테이블명만 저장하면 alias나 schema가 바뀔 때 다른 메타데이터와 연결이 흔들릴 수 있기 때문이다.</p>
+
+    <h3>3.2 연결할 수 없는 컬럼도 상태로 남기기</h3>
+    <p>상수 컬럼이나 <code class="inline">now()</code>처럼 실제 상류 컬럼이 없는 경우와, SQL을 해석했지만 컬럼 출처를 확인하지 못한 경우는 의미가 다르다. 둘을 모두 저장 대상에서 빼면 화면에서는 똑같이 "상류 없음"으로 보이므로, 확인하지 못한 관계는 <code class="inline">resolved = false</code>로 별도 상태를 남겼다.</p>
+  </div>
+</section>
+
+<!-- ==================== SECTION 4 ==================== -->
+<section class="section section-light" id="sec-4">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>컬럼 계보를 메타데이터로 저장하기</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>계산된 계보는 일회성 API 응답으로 끝내지 않고 PostgreSQL에 저장했다. 별도의 node 테이블을 새로 만들기보다, 이미 플랫폼이 관리하는 모델 ID를 재사용하고 <strong>모델별 계산 상태</strong>와 <strong>컬럼 간 의존 관계</strong>만 추가했다.</p>
+
+    <div class="grid-2">
+      <div class="dz-card">
+        <h4>lineage_build</h4>
+        <p>모델별로 어떤 입력으로 언제 계보를 계산했는지 기록한다.</p>
+        <ul>
+          <li><code class="inline">model_id</code></li>
+          <li><code class="inline">sql_hash</code>, <code class="inline">schema_hash</code>, <code class="inline">lineage_hash</code></li>
+          <li><code class="inline">out_columns</code>, <code class="inline">ref_relations</code></li>
+          <li><code class="inline">dialect</code>, <code class="inline">sqlglot_version</code></li>
+          <li><code class="inline">status</code>, <code class="inline">error_message</code>, <code class="inline">is_active</code></li>
+        </ul>
+      </div>
+      <div class="dz-card">
+        <h4>column_lineage_edge</h4>
+        <p>실제 컬럼 간 의존 사실을 간선 단위로 저장한다.</p>
+        <ul>
+          <li><code class="inline">build_id</code>, <code class="inline">model_id</code></li>
+          <li><code class="inline">source_relation</code>, <code class="inline">source_column</code></li>
+          <li><code class="inline">target_relation</code>, <code class="inline">target_column</code></li>
+          <li><code class="inline">expression</code></li>
+          <li><code class="inline">resolved</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="arch">lineage_build                     column_lineage_edge
+──────────────                    ─────────────────────
+id (PK)              1 ───── N   build_id (FK)
+model_id                          source_relation
+lineage_hash                      source_column
+out_columns                       target_relation
+ref_relations                     target_column
+status                            expression
+is_active                         resolved</div>
+
+    <h3>4.1 계보 사실과 화면 표현 분리</h3>
+    <p>저장 대상은 <strong>어느 컬럼이 어느 컬럼에 의존하는가</strong>라는 사실로 한정했다. <code class="inline">isMart</code>, <code class="inline">group</code>, <code class="inline">label</code> 같은 값은 컬럼 의존 관계 자체가 아니라 화면 표현을 위한 정보이므로 계보 테이블에는 넣지 않았다.</p>
+
+    <div class="table-scroll">
+      <table class="dz-table">
+        <thead><tr><th>저장</th><th>조회 시 결합</th></tr></thead>
+        <tbody>
+          <tr><td>source/target relation·column</td><td>모델명·라벨</td></tr>
+          <tr><td>expression</td><td>마트 지정 여부</td></tr>
+          <tr><td>resolved 상태</td><td>그룹·화면 위치</td></tr>
+          <tr><td>build 상태·버전</td><td>기타 최신 Catalog 메타데이터</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>이렇게 저장 구조를 분리해 두면 같은 컬럼 계보를 모델 상세, 영향도 분석, 품질 화면 등에서 재사용할 수 있고, 마트 지정처럼 표현 정보만 바뀐 경우에는 계보를 다시 계산할 필요가 없다.</p>
+  </div>
+</section>
+
+<!-- ==================== SECTION 5 ==================== -->
+<section class="section section-dark" id="sec-5">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>저장한 계보를 조회 화면으로 조립하기</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>조회할 때는 활성 상태의 <code class="inline">lineage_build</code>와 그 빌드에 속한 <code class="inline">column_lineage_edge</code>를 읽는다. 여기에 최신 모델·카탈로그·마트 메타데이터를 결합해 UI가 사용할 노드와 간선으로 변환한다.</p>
+
+    <div class="arch">GET /lineage
+   │
+   ├─ active lineage_build 조회
+   ├─ column_lineage_edge 조회
+   ├─ model / catalog / mart metadata 결합
+   │
+   └─▶ nodes + columnEdges + transforms
+             │
+             ▼
+        Data Mates Lineage UI</div>
+
+    <p>사용자는 모델 노드에서 컬럼을 펼친 뒤 특정 컬럼의 상류·하류 연결을 확인할 수 있다. 저장소에는 직접 연결된 컬럼 간선만 보관하므로, 여러 단계를 따라가는 영향도 조회가 필요하면 이 간선을 그래프처럼 순회하면 된다.</p>
+
+    <div class="code-block" data-lang="SQL"><pre><span class="kw">SELECT</span>
+    e.source_relation,
+    e.source_column,
+    e.target_relation,
+    e.target_column,
+    e.expression,
+    e.resolved
+<span class="kw">FROM</span> column_lineage_edge e
+<span class="kw">JOIN</span> lineage_build b
+  <span class="kw">ON</span> b.id = e.build_id
+ <span class="kw">AND</span> b.is_active
+<span class="kw">WHERE</span> e.target_relation = <span class="str">:model_id</span>;</pre></div>
+
+    <h3>5.1 계산과 조회는 역할만 분리</h3>
+    <p>컬럼 계보를 메타데이터로 저장하면서 자연스럽게 계산과 조회의 역할도 분리했다. SQLGlot은 계보를 만들거나 갱신할 때만 사용하고, 일반 조회는 저장된 결과를 읽는다. 이 글에서 중요한 포인트는 성능 최적화 자체보다 <strong>계보를 계산 결과가 아닌 조회 가능한 플랫폼 데이터로 만들었다는 것</strong>이다.</p>
+
+    <div class="dz-card-accent">
+      <h4>조회 결과</h4>
+      <p class="mb-0">저장된 컬럼 간선 조회는 평균 29.0ms, 실제 HTTP 응답은 36~56ms 수준이었다. 조회 중에는 SQLGlot 계산이 발생하지 않는다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 6 ==================== -->
+<section class="section section-surface" id="sec-6">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>바뀐 모델의 계보만 갱신하기</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>컬럼 계보를 저장하기 시작하면 다음 문제는 갱신 시점이다. 모든 조회마다 계산할 필요는 없지만, SQL이나 상류 스키마가 바뀌었는데 이전 계보를 계속 보여줘서도 안 된다. 그래서 모델별로 계보 결과에 영향을 주는 입력을 해시로 관리했다.</p>
+
+    <div class="formula-box">SQL_HASH      = sha256( 계보 계산에 사용한 SQL 본문 )
+SCHEMA_HASH   = sha256( 실제로 참조하는 상류 relation의 컬럼 목록 )
+LINEAGE_HASH  = sha256( SQL_HASH + SCHEMA_HASH + dialect + sqlglot 버전 )</div>
+
+    <div class="arch">모델 SQL / 상류 컬럼 / dialect / parser version
+                     │
+                     ▼
+                LINEAGE_HASH
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+      이전과 같음            이전과 다름
+          │                     │
+        SKIP                  REBUILD
+                                │
+                                ▼
+                      새 lineage_build + edge</div>
+
+    <p>파일 수정 시간은 사용하지 않았다. dbt가 compiled 파일을 다시 써도 내용이 같다면 계보는 같기 때문이다. SQL 본문이 같고 참조하는 상류 컬럼 집합도 같으면 이전 빌드에서 저장한 <code class="inline">out_columns</code>와 <code class="inline">ref_relations</code>를 재사용해 파싱 자체를 건너뛴다.</p>
+
+    <h3>6.1 하류 재계산 범위 줄이기</h3>
+    <p><code class="inline">SCHEMA_HASH</code>에는 전체 카탈로그가 아니라 해당 모델이 실제로 참조하는 상류 relation의 출력 컬럼만 넣었다. 상류 모델의 SQL이 바뀌더라도 출력 컬럼 구성이 그대로라면 하류 모델의 계보 입력은 변하지 않으므로 다시 계산하지 않는다.</p>
+
+    <div class="arch">A ─▶ B ─▶ C
+
+A SQL 변경
+├─ A 출력 컬럼 그대로  → B의 SCHEMA_HASH 동일 → B SKIP
+└─ A 출력 컬럼 변경    → B의 SCHEMA_HASH 변경 → B REBUILD</div>
+
+    <p>내용 변화가 없는 상태에서 증분 빌드를 실행하면 모든 모델이 SKIP되어 약 17.5ms에 끝났다. 전체 모델을 다시 계산해야 할 때는 약 3.1초가 걸렸다.</p>
+  </div>
+</section>
+
+<!-- ==================== SECTION 7 ==================== -->
+<section class="section section-light" id="sec-7">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>틀린 계보를 남기지 않기 위한 기준</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <p>SQL 파서 기반 컬럼 리니지는 모든 SQL을 완벽하게 해석할 수 없다. 따라서 "계보를 만들었다"보다 중요한 것은 <strong>확실히 알 수 없는 관계를 어떻게 표현할 것인가</strong>였다. 확인하지 못한 관계를 임의로 연결하지 않고 상태로 남기는 쪽을 선택했다.</p>
+
+    <div class="table-scroll">
+      <table class="dz-table">
+        <thead><tr><th>상태</th><th>의미</th><th>처리</th></tr></thead>
+        <tbody>
+          <tr><td><strong>resolved</strong></td><td>모든 출력 컬럼의 계보를 확인</td><td>활성 계보로 사용</td></tr>
+          <tr><td><strong>partial</strong></td><td>일부 컬럼만 확인</td><td>확인된 간선은 사용하고 나머지는 확인 불가 표시</td></tr>
+          <tr><td><strong>unresolved</strong></td><td>모델의 컬럼 계보를 확인하지 못함</td><td>상태와 사유를 명시</td></tr>
+          <tr><td><strong>failed</strong></td><td>계산 과정 자체가 예외로 종료</td><td>실패 이력만 남기고 이전 활성 계보 유지</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>7.1 새 결과가 완성된 뒤 교체</h3>
+    <p>새로운 계보는 모든 간선을 저장한 다음 활성 상태로 전환한다. 빌드 행 생성, 간선 저장, 기존 활성 해제, 새 빌드 활성화를 하나의 트랜잭션으로 처리해 중간 상태가 조회되지 않게 했다.</p>
+
+    <div class="arch">BEGIN
+ ├─ 새 lineage_build 생성   (is_active = FALSE)
+ ├─ column_lineage_edge 저장
+ ├─ 기존 active build 해제
+ └─ 새 build 활성화
+COMMIT</div>
+
+    <h3>7.2 남은 한계</h3>
+    <p>동적 SQL, UDF 내부 로직, 일부 PIVOT과 재귀 CTE는 SQLGlot만으로 컬럼 단위 관계를 정확히 풀기 어렵다. dbt compiled SQL이 없고 복잡한 Jinja가 원본 SQL에 남아 있는 경우도 분석이 제한된다. 이런 경우에는 추정한 연결을 만들지 않고 <code class="inline">partial</code> 또는 <code class="inline">unresolved</code> 상태로 남긴다.</p>
+
+    <h3>7.3 구축 결과</h3>
+    <ul class="summary-list">
+      <li>dbt의 모델 의존 관계에서 한 단계 더 내려가 <strong>컬럼 452개와 컬럼 간선 676개</strong>를 메타데이터로 구축했다.</li>
+      <li>manifest, compiled SQL, catalog를 결합해 SQLGlot이 실제 relation과 schema를 알고 컬럼 의존 관계를 계산하도록 했다.</li>
+      <li>계산된 관계는 <code class="inline">lineage_build</code>와 <code class="inline">column_lineage_edge</code>에 저장하고, 모델 ID를 기준으로 기존 플랫폼 메타데이터와 연결했다.</li>
+      <li>조회 API는 저장된 간선을 모델·카탈로그·마트 정보와 조합해 컬럼 그래프를 구성한다.</li>
+      <li>SQL 내용과 상류 컬럼 구성이 바뀐 모델만 계보를 다시 계산해 저장 결과가 오래되거나 불필요하게 전량 재계산되는 문제를 줄였다.</li>
+      <li>확인하지 못한 계보와 계산 실패를 별도 상태로 관리해 "상류 없음"과 "알 수 없음"을 구분했다.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <p>SQLGlot 30.14.0 · dbt · DuckDB SQL · PostgreSQL</p>
+    <p>Data Platform / Column Lineage / Metadata</p>
+  </div>
+</footer>
+
+<!-- Back to Top -->
+<div aria-label="맨 위로" class="back-to-top" id="backToTop" role="button">
+<svg viewbox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+</div>
+<script>
+var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Scroll progress bar
+(function() {
+  var bar = document.getElementById('scrollProgress');
+  function updateBar() {
+    var scrollTop = window.pageYOffset;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    bar.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+})();
+
+// Back to top
+(function() {
+  var btn = document.getElementById('backToTop');
+  window.addEventListener('scroll', function() {
+    if (window.pageYOffset > 400) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }, { passive: true });
+  btn.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  });
+})();
+
+// Fade-up on scroll
+(function() {
+  if (prefersReducedMotion) return;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-in');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.section-inner').forEach(function(el) {
+    el.classList.add('fade-up');
+    observer.observe(el);
+  });
+})();
+
+// Nav active highlighting
+(function() {
+  var navLinks = document.querySelectorAll('.nav a');
+  var sections = [];
+  navLinks.forEach(function(a) {
+    var target = document.getElementById(a.dataset.target);
+    if (target) sections.push({ el: target, link: a });
+  });
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        navLinks.forEach(function(l) { l.classList.remove('active'); });
+        var match = sections.find(function(s) { return s.el === e.target; });
+        if (match) match.link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(function(s) { observer.observe(s.el); });
+})();
+
+// Smooth scroll for nav links
+document.querySelectorAll('.nav a').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      var offset = 64;
+      var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: top, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+    }
+  });
+});
+</script>
+</body>
+</html>
+
