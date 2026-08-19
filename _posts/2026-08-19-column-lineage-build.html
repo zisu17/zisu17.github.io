@@ -1,10 +1,11 @@
 ---
 layout: none
-title: "dbt 모델에 컬럼 레벨 리니지 구축하기"
+title: "[PJT] dbt 모델에 컬럼 레벨 리니지 구축하기"
 excerpt: "dbt 산출물과 카탈로그 정보를 SQLGlot으로 분석해 컬럼 간 의존 관계를 계산하고 PostgreSQL에 메타데이터로 저장한 과정을 정리한다."
 categories:
   - Data
 tags:
+  - PJT
   - Data
   - dbt
   - Column Lineage
@@ -14,6 +15,8 @@ tags:
 permalink: /data/column-lineage-build/
 date: 2026-08-19
 last_modified_at: 2026-08-19
+series: "데이터 플랫폼 구축 프로젝트"
+series_order: 5
 ---
 
 <!DOCTYPE html>
@@ -22,9 +25,10 @@ last_modified_at: 2026-08-19
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>dbt 모델에 컬럼 레벨 리니지 구축하기</title>
+<title>[PJT] dbt 모델에 컬럼 레벨 리니지 구축하기</title>
 <link href="https://cdn.jsdelivr.net" rel="preconnect"/>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="/assets/css/pjt-series.css" rel="stylesheet"/>
 <style>
 :root {
   /* Accent — zisu17.github.io 링크 색 계열. 장식 전용 */
@@ -804,7 +808,7 @@ code.inline {
 <header class="hero">
   <div class="hero-inner">
     <a class="home-link" href="/">What's your ETL?</a>
-    <span class="hero-badge">Data Platform / Column Lineage</span>
+    <span class="hero-badge">PJT / Data Platform</span>
     <h1>dbt 모델에<br>컬럼 레벨 리니지 구축하기</h1>
     <p class="excerpt">테이블 단위 의존 관계만 있던 데이터 플랫폼에 컬럼 단위 계보를 추가했다. dbt 산출물과 카탈로그에서 분석에 필요한 정보를 모으고, SQLGlot으로 컬럼 간 의존 관계를 계산한 뒤 PostgreSQL에 메타데이터로 저장해 상·하류 컬럼을 조회할 수 있는 구조를 만들었다.</p>
     <div class="hero-meta">
@@ -1152,8 +1156,10 @@ COMMIT</div>
       <li>SQL 내용과 상류 컬럼 구성이 바뀐 모델만 계보를 다시 계산해 저장 결과가 오래되거나 불필요하게 전량 재계산되는 문제를 줄였다.</li>
       <li>확인하지 못한 계보와 계산 실패를 별도 상태로 관리해 "상류 없음"과 "알 수 없음"을 구분했다.</li>
     </ul>
-  </div>
+</div>
 </section>
+
+{% include pjt-series.html current=5 %}
 
 <!-- ==================== FOOTER ==================== -->
 <footer class="footer">
@@ -1252,4 +1258,3 @@ document.querySelectorAll('.nav a').forEach(function(a) {
 </script>
 </body>
 </html>
-

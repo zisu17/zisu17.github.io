@@ -1,10 +1,11 @@
 ---
 layout: none
-title: "데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유"
+title: "[PJT] 데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유"
 excerpt: "데이터 규모에 비해 무거웠던 Spark와 Iceberg 중심 구조를 DuckDB와 DuckLake로 단순화한 과정과 결과를 정리한다."
 categories:
   - Data
 tags:
+  - PJT
   - Data
   - DuckDB
   - DuckLake
@@ -13,7 +14,9 @@ tags:
   - dbt
 permalink: /data/duckdb-ducklake-architecture-rewrite/
 date: 2026-08-18
-last_modified_at: 2026-08-18
+last_modified_at: 2026-08-19
+series: "데이터 플랫폼 구축 프로젝트"
+series_order: 4
 ---
 
 <!DOCTYPE html>
@@ -22,73 +25,98 @@ last_modified_at: 2026-08-18
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유</title>
+<title>[PJT] 데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유</title>
+<link href="https://cdn.jsdelivr.net" rel="preconnect"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="/assets/css/pjt-series.css" rel="stylesheet"/>
 <style>
-:root{
-  --bg:#ffffff; --text:#171717; --sub:#666; --line:#e7e7e7;
-  --soft:#f7f7f7; --dark:#111; --accent:#e85d04; --good:#197a3e;
-  --max:1180px; --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+:root {
+  --bg: #fff; --text: #101010; --sub: #5a6169; --line: #e3e5e8;
+  --soft: #f8f9f9; --dark: #0f0f0f; --accent: #ff6c02; --accent-soft: #ff984e;
+  --max: 1180px; --mono: "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.78}
-a{color:inherit}
-.hero{background:#111;color:#fff;padding:88px 24px 72px}
-.wrap{max-width:var(--max);margin:0 auto}
-.home-link{display:block;width:max-content;margin-bottom:32px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.02em;text-decoration:none}
-.home-link:hover{color:#ff9a5f}
-.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;color:#ff9a5f;margin-bottom:16px}
-h1{font-size:44px;line-height:1.2;letter-spacing:-.035em;margin:0 0 20px}
-.lead{max-width:760px;font-size:18px;line-height:1.75;color:#c9c9c9;margin:0}
-.meta{margin-top:26px;font-size:13px;color:#8f8f8f}
-nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
-nav .wrap{display:flex;gap:6px;overflow:auto;padding:8px 20px}
-nav a{font-size:13px;font-weight:650;text-decoration:none;white-space:nowrap;padding:9px 11px;border-radius:6px}
-nav a:hover{background:#f3f3f3}
-section{padding:70px 24px;border-bottom:1px solid #f0f0f0}
-section:nth-of-type(even){background:#fafafa}
-.num{font:700 12px var(--mono);color:var(--accent);letter-spacing:.08em}
-h2{font-size:31px;line-height:1.3;letter-spacing:-.025em;margin:8px 0 28px}
-h3{font-size:21px;line-height:1.45;margin:42px 0 14px;letter-spacing:-.015em}
-p{font-size:16px;margin:0 0 18px}
-strong{font-weight:750}
-.callout{border-left:4px solid var(--accent);background:#fff7f1;padding:18px 20px;margin:28px 0;border-radius:0 6px 6px 0}
-.callout p{margin:0}
-.table-wrap{overflow:auto;margin:26px 0 32px;border:1px solid var(--line);border-radius:8px;background:#fff}
-table{width:100%;border-collapse:collapse;min-width:620px;font-size:14px}
-th{background:#171717;color:#fff;text-align:left;padding:13px 15px;font-weight:700}
-td{padding:13px 15px;border-top:1px solid var(--line);vertical-align:top}
-tr:nth-child(even) td{background:#fafafa}
-code{font-family:var(--mono);font-size:.92em;background:#f1f1f1;padding:2px 5px;border-radius:4px}
-.arch{font-family:var(--mono);font-size:14px;line-height:1.75;background:#121212;color:#eee;padding:24px;border-radius:8px;overflow:auto;margin:28px 0;white-space:pre}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}
-.kpi{border:1px solid var(--line);background:#fff;padding:20px;border-radius:8px}
-.kpi b{display:block;font-size:25px;line-height:1.2;margin-bottom:8px}
-.kpi span{display:block;font-size:13px;color:var(--sub);line-height:1.5}
-.note{font-size:14px;color:var(--sub)}
-ul{padding-left:22px}
-li{margin:8px 0}
-footer{padding:42px 24px;background:#111;color:#777;text-align:center;font-size:13px}
-@media(max-width:760px){
-  h1{font-size:31px}
-  h2{font-size:25px}
-  .hero{padding:60px 20px 48px}
-  section{padding:54px 20px}
-  .kpis{grid-template-columns:1fr 1fr}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Montserrat", "Pretendard", sans-serif; line-height: 1.8; -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+.scroll-progress { position: fixed; top: 0; left: 0; z-index: 200; width: 0; height: 3px; background: linear-gradient(90deg, #ff984e, #ff6c02 50%, #e05a00); }
+.hero { position: relative; overflow: hidden; padding: 96px 0 64px; background: linear-gradient(180deg, #171310 0%, var(--dark) 62%); color: #fff; }
+.hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 700px; height: 700px; border-radius: 50%; background: radial-gradient(circle, rgba(255,108,2,.15) 0%, transparent 62%); }
+.hero::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, #ff984e, #ff6c02 50%, #e05a00); }
+.wrap { position: relative; z-index: 1; max-width: var(--max); margin: 0 auto; padding: 0 32px; }
+.home-link { display: block; width: max-content; margin-bottom: 32px; color: #fff; font-size: 20px; font-weight: 700; letter-spacing: -.02em; text-decoration: none; }
+.home-link:hover { color: var(--accent-soft); }
+.eyebrow { display: inline-flex; margin-bottom: 24px; padding: 5px 14px; border: 1px solid rgba(255,108,2,.32); border-radius: 9999px; background: rgba(255,108,2,.12); color: var(--accent-soft); font-size: 13px; font-weight: 600; letter-spacing: 0; }
+h1 { margin: 0 0 24px; font-size: 42px; line-height: 1.25; letter-spacing: -.02em; }
+.lead { max-width: 780px; margin: 0; color: #b9bec3; font-size: 17px; line-height: 1.75; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+.hero-tag { padding: 5px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 9999px; background: rgba(255,255,255,.06); color: #b9bec3; font-size: 12px; font-weight: 500; }
+.meta { display: flex; align-items: center; gap: 8px; margin: 24px 0 0; color: #8b9198; font-size: 13px; }
+.meta::before { content: ''; width: 20px; height: 1px; background: #5a6169; }
+nav { position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); backdrop-filter: blur(8px); }
+nav .wrap { display: flex; gap: 4px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; }
+nav a { padding: 9px 11px; border-radius: 4px; color: #5a6169; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+nav a:hover { background: #f3f3f3; color: #c24e00; }
+body > section:not(.pjt-series) { padding: 72px 0; border-bottom: 1px solid #f0f0f0; }
+body > section:not(.pjt-series):nth-of-type(even) { background: var(--soft); }
+.num { color: #c24e00; font: 700 12px var(--mono); letter-spacing: .08em; }
+h2 { margin: 8px 0 28px; font-size: 31px; line-height: 1.3; letter-spacing: -.025em; }
+h3 { margin: 42px 0 14px; font-size: 21px; line-height: 1.45; letter-spacing: -.015em; }
+p { margin: 0 0 18px; font-size: 16px; }
+strong { font-weight: 750; }
+.callout { margin: 28px 0; padding: 18px 20px; border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; background: #fff7f1; }
+.callout p { margin: 0; }
+.table-wrap { overflow: auto; margin: 26px 0 32px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; }
+th { padding: 13px 15px; background: #171717; color: #fff; font-weight: 700; text-align: left; }
+td { padding: 13px 15px; border-top: 1px solid var(--line); vertical-align: top; }
+tr:nth-child(even) td { background: #fafafa; }
+code { padding: 2px 5px; border-radius: 4px; background: #f1f1f1; font-family: var(--mono); font-size: .92em; }
+.arch { overflow: auto; margin: 28px 0; padding: 24px; border-radius: 8px; background: #121212; color: #eee; font: 14px/1.75 var(--mono); white-space: pre; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0; }
+.kpi { padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.kpi b { display: block; margin-bottom: 8px; font-size: 25px; line-height: 1.2; }
+.kpi span, .note { color: var(--sub); font-size: 13px; line-height: 1.5; }
+ul { padding-left: 22px; }
+li { margin: 8px 0; }
+.footer { position: relative; padding: 40px 32px; background: var(--dark); color: #8b9198; }
+.footer::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ff984e, #ff6c02 50%, #e05a00); }
+.footer-inner { max-width: var(--max); margin: 0 auto; }
+.footer p { margin: 0; color: #8b9198; font-size: 13px; line-height: 1.7; }
+.footer p + p { margin-top: 6px; }
+.back-to-top { position: fixed; right: 24px; bottom: 24px; z-index: 150; display: flex; width: 42px; height: 42px; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: #fff; box-shadow: 0 4px 14px rgba(16,16,16,.1); cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(8px); transition: all 220ms ease; }
+.back-to-top.visible { opacity: 1; pointer-events: auto; transform: none; }
+.back-to-top svg { width: 18px; height: 18px; fill: none; stroke: #101010; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+@media (max-width: 760px) {
+  .hero { padding: 60px 0 48px; }
+  .wrap { padding-right: 20px; padding-left: 20px; }
+  h1 { font-size: 31px; }
+  h2 { font-size: 25px; }
+  body > section:not(.pjt-series) { padding: 54px 0; }
+  .kpis { grid-template-columns: 1fr 1fr; }
 }
 </style>
 </head>
 <body>
+<div class="scroll-progress" id="scrollProgress"></div>
 <header class="hero">
 <div class="wrap">
 <a class="home-link" href="/">What's your ETL?</a>
-<div class="eyebrow">DATA PLATFORM / DUCKLAKE</div>
+<div class="eyebrow">PJT / DATA PLATFORM</div>
 <h1>데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유</h1>
 <p class="lead">
       작은 데이터 플랫폼에 Spark, Iceberg REST Catalog, DuckDB가 함께 들어가 있었다.
       기능은 동작했지만 데이터 규모에 비해 실행 구조가 무거웠고, 변환과 조회가 서로 다른 엔진에 나뉘어 운영 복잡도도 커졌다.
       이 글은 저장 계층과 실행 엔진을 다시 구성하면서 어떤 기준으로 구조를 줄였는지 정리한 기록이다.
     </p>
-<div class="meta">2026.08.18 · Postgres · DuckDB · DuckLake · dbt</div>
+<div class="hero-meta">
+<span class="hero-tag">Data Platform</span>
+<span class="hero-tag">DuckDB</span>
+<span class="hero-tag">DuckLake</span>
+<span class="hero-tag">PostgreSQL</span>
+<span class="hero-tag">dbt</span>
+</div>
+<p class="meta">2026-08-18</p>
 </div>
 </header>
 <nav>
@@ -310,17 +338,42 @@ BI / Analysis
 </div>
 </div>
 </section>
-<footer>
-  Data Platform · DuckDB · DuckLake · Postgres · dbt
+{% include pjt-series.html current=4 %}
+<footer class="footer">
+<div class="footer-inner">
+<p>DuckDB · DuckLake · PostgreSQL · dbt</p>
+<p>PJT / Data Platform / Architecture</p>
+</div>
 </footer>
+<div aria-label="맨 위로" class="back-to-top" id="backToTop" role="button">
+<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+</div>
 <script>
+var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+(function() {
+  var bar = document.getElementById('scrollProgress');
+  function updateBar() {
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (docHeight > 0 ? window.pageYOffset / docHeight * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+})();
+(function() {
+  var btn = document.getElementById('backToTop');
+  window.addEventListener('scroll', function() {
+    btn.classList.toggle('visible', window.pageYOffset > 400);
+  }, { passive: true });
+  btn.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  });
+})();
 document.querySelectorAll('nav a').forEach(a=>{
   a.addEventListener('click',e=>{
     e.preventDefault();
-    document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+    document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:prefersReducedMotion ? 'auto' : 'smooth'});
   });
 });
 </script>
 </body>
 </html>
-

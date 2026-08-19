@@ -1,10 +1,11 @@
 ---
 layout: none
-title: "[Superset] Superset 기반 데이터 분석 기능 통합"
+title: "[PJT] Superset 기반 데이터 분석 기능 통합"
 excerpt: "Apache Superset을 시각화 엔진으로 사용하면서 데이터 플랫폼 안에서 하나의 분석 기능처럼 제공하는 통합 구조를 설계한다."
 categories:
   - Data
 tags:
+  - PJT
   - Data
   - Superset
   - DuckDB
@@ -12,7 +13,9 @@ tags:
   - Embedding
 permalink: /data/superset-data-analysis-integration/
 date: 2026-08-11
-last_modified_at: 2026-08-11
+last_modified_at: 2026-08-19
+series: "데이터 플랫폼 구축 프로젝트"
+series_order: 3
 ---
 
 <!DOCTYPE html>
@@ -20,9 +23,10 @@ last_modified_at: 2026-08-11
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Superset 기반 데이터 분석 기능 통합</title>
+<title>[PJT] Superset 기반 데이터 분석 기능 통합</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="/assets/css/pjt-series.css" rel="stylesheet">
 <style>
 :root {
   /* Accent — zisu17.github.io 링크 색 계열. 장식 전용 */
@@ -1019,7 +1023,7 @@ code.inline {
 <header class="hero">
   <div class="hero-inner">
     <a class="home-link" href="/">What's your ETL?</a>
-    <span class="hero-badge">Data Platform / Superset</span>
+    <span class="hero-badge">PJT / Data Platform</span>
     <h1>Superset 기반<br>데이터 분석 기능 통합</h1>
     <p class="excerpt">Apache Superset 을 시각화 엔진으로 쓰되, 사용자에게는 두 번째 도구로 보이지 않게 한다. 메뉴 하나가 늘고, 데이터 모델 화면에서 분석으로 이어지고, 접속 주소는 여전히 하나다. 쿼리는 후보 네 개 중 <em>가장 단순한 것부터</em> P0 에서 검증해 정했다 — 새 쿼리 엔진을 하나도 넣지 않는 1번이 다섯 항목 전부를 통과했다.</p>
     <div class="hero-meta">
@@ -2096,6 +2100,7 @@ SET GLOBAL TimeZone='UTC'  → 루트 · cursor 모두 UTC  (기존 cursor 까�
   </div>
 </section>
 
+{% include pjt-series.html current=3 %}
 
 <!-- ==================== FOOTER ==================== -->
 <footer class="footer">
