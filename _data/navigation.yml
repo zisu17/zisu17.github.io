@@ -19,9 +19,15 @@ main:
 categories:
   - title: "Data Engineering"
     url: /categories/data-engineering/
+  - title: "Data"
+    url: /categories/data/
   - title: "Database"
     url: /categories/database/
   - title: "Computer Science"
     url: /categories/computer-science/
+  - title: "Web"
+    url: /categories/web/
   - title: "Infra"
     url: /categories/infra/
+  - title: "Dev"
+    url: /categories/dev/
