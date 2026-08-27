@@ -1,0 +1,28 @@
+<header class="blog-masthead">
+  <div class="blog-masthead-inner">
+    <a class="blog-title" href="{{ '/' | relative_url }}" aria-label="{{ site.title | escape }} 홈으로">
+      {{ site.title }}
+    </a>
+    <nav class="blog-global-nav" aria-label="블로그 전역 메뉴">
+      <a href="{{ '/' | relative_url }}">Home</a>
+      <a href="{{ '/about/' | relative_url }}">About</a>
+      <a href="https://github.com/zisu17" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="blog-layout">
+  <aside class="blog-sidebar" aria-label="카테고리">
+    <div class="blog-sidebar-inner">
+      <span class="blog-sidebar-label">Categories</span>
+      <ul class="blog-category-list">
+        {% for category in site.data.navigation.categories %}
+          <li>
+            <a href="{{ category.url | relative_url }}"{% if page.categories contains category.title %} aria-current="page"{% endif %}>{{ category.title }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </aside>
+
+  <main class="blog-main">

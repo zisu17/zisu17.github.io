@@ -17,6 +17,8 @@ main:
 
 # sidebar navigation (categories)
 categories:
+  - title: "Project"
+    url: /categories/project/
   - title: "Data Engineering"
     url: /categories/data-engineering/
   - title: "Data"

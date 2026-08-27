@@ -3,7 +3,7 @@ layout: none
 title: "[PJT] dbt 모델에 컬럼 레벨 리니지 구축하기"
 excerpt: "dbt 산출물과 카탈로그 정보를 SQLGlot으로 분석해 컬럼 간 의존 관계를 계산하고 PostgreSQL에 메타데이터로 저장한 과정을 정리한다."
 categories:
-  - Data
+  - Project
 tags:
   - PJT
   - Data
@@ -14,7 +14,7 @@ tags:
   - Metadata
 permalink: /data/column-lineage-build/
 date: 2026-08-19
-last_modified_at: 2026-08-19
+last_modified_at: 2026-08-27
 series: "데이터 플랫폼 구축 프로젝트"
 series_order: 4
 ---
@@ -799,15 +799,17 @@ code.inline {
 .fade-up { opacity: 0; transform: translateY(16px); transition: all 0.5s var(--dz-ease); }
 .fade-up.is-in { opacity: 1; transform: none; }
 </style>
+<link href="{{ '/assets/css/project-post-shell.css' | relative_url }}" rel="stylesheet"/>
 </head>
 <body>
 <!-- Scroll Progress -->
 <div class="scroll-progress" id="scrollProgress"></div>
 
+{% include project-blog-shell-start.html %}
+
 <!-- ==================== HERO ==================== -->
 <header class="hero">
   <div class="hero-inner">
-    <a class="home-link" href="/">What's your ETL?</a>
     <span class="hero-badge">PJT / Data Platform</span>
     <h1>dbt 모델에<br>컬럼 레벨 리니지 구축하기</h1>
     <p class="excerpt">테이블 단위 의존 관계만 있던 데이터 플랫폼에 컬럼 단위 계보를 추가했다. dbt 산출물과 카탈로그에서 분석에 필요한 정보를 모으고, SQLGlot으로 컬럼 간 의존 관계를 계산한 뒤 PostgreSQL에 메타데이터로 저장해 상·하류 컬럼을 조회할 수 있는 구조를 만들었다.</p>
@@ -1168,6 +1170,8 @@ COMMIT</div>
     <p>Data Platform / Column Lineage / Metadata</p>
   </div>
 </footer>
+
+{% include project-blog-shell-end.html %}
 
 <!-- Back to Top -->
 <div aria-label="맨 위로" class="back-to-top" id="backToTop" role="button">

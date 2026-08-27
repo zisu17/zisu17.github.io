@@ -1,0 +1,350 @@
+/* Shared shell for standalone [PJT] posts.
+   Based on the orange/light blog-integrated template; only components used by
+   the project posts are kept here. */
+:root {
+  --dz-accent: #ff984e;
+  --dz-accent-text: #c24e00;
+  --dz-accent-text-hover: #9c3d00;
+  --dz-heading: #222;
+  --dz-text: #333;
+  --dz-text-sub: #4a4a4a;
+  --dz-muted: #949daf;
+  --dz-line: #e1e1e1;
+  --dz-line-strong: #d3d3d3;
+  --dz-paper: #faf9f7;
+  --dz-tint: #f7f8fa;
+  --dz-container: 1180px;
+  --dz-shell: 1460px;
+  --dz-sidebar: 220px;
+  --dz-radius: 6px;
+  --dz-pill: 999px;
+  --dz-alpha-primary: rgba(255, 108, 2, 0.06);
+  --dz-font-sans: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html { scroll-padding-top: 116px; }
+
+body {
+  margin: 0;
+  color: var(--dz-text);
+  background: #fff;
+  font-family: var(--dz-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body a { transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease; }
+
+.scroll-progress { z-index: 400 !important; }
+
+.blog-masthead {
+  position: sticky;
+  top: 0;
+  z-index: 320;
+  height: 64px;
+  border-bottom: 1px solid var(--dz-line);
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  backdrop-filter: saturate(180%) blur(10px);
+}
+
+.blog-masthead-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: var(--dz-shell);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.blog-title {
+  color: var(--dz-heading);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.blog-title:hover { color: var(--dz-accent-text); }
+
+.blog-global-nav {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: visible;
+  border: 0;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.blog-global-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 13px;
+  border-radius: var(--dz-radius);
+  color: var(--dz-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.blog-global-nav a:hover {
+  color: var(--dz-accent-text);
+  background: var(--dz-alpha-primary);
+}
+
+.blog-layout {
+  display: grid;
+  grid-template-columns: var(--dz-sidebar) minmax(0, 1fr);
+  align-items: start;
+  max-width: var(--dz-shell);
+  margin: 0 auto;
+}
+
+.blog-sidebar {
+  align-self: stretch;
+  min-width: 0;
+  border-right: 1px solid var(--dz-line);
+  background: #fff;
+}
+
+.blog-sidebar-inner {
+  position: sticky;
+  top: 64px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 36px 24px 40px;
+}
+
+.blog-sidebar-label {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--dz-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.blog-category-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blog-category-list li { margin: 0; padding: 0; }
+.blog-category-list li + li { margin-top: 2px; }
+
+.blog-category-list a {
+  display: block;
+  padding: 9px 10px;
+  border-radius: var(--dz-radius);
+  color: var(--dz-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.blog-category-list a:hover,
+.blog-category-list a[aria-current="page"] {
+  color: var(--dz-accent-text);
+  background: var(--dz-alpha-primary);
+}
+
+.blog-category-list a[aria-current="page"] { font-weight: 700; }
+
+.blog-main {
+  min-width: 0;
+  overflow: clip;
+}
+
+/* Project article hero: the integrated template's minimal paper treatment. */
+.blog-main .hero {
+  padding: 76px 0 56px;
+  border-bottom: 1px solid var(--dz-line);
+  background: var(--dz-paper);
+  color: var(--dz-text);
+}
+
+.blog-main .hero::before,
+.blog-main .hero::after { display: none; }
+
+.blog-main .hero h1 { color: var(--dz-heading); }
+
+.blog-main .hero .excerpt,
+.blog-main .hero .lead { color: var(--dz-text-sub); }
+
+.blog-main .hero-badge,
+.blog-main .eyebrow {
+  display: block;
+  width: auto;
+  margin-bottom: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--dz-accent-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.blog-main .hero-tag {
+  padding: 3px 0;
+  border: 0;
+  border-bottom: 1px solid var(--dz-line);
+  border-radius: 0;
+  background: none;
+  color: var(--dz-text-sub);
+}
+
+.blog-main .hero-date,
+.blog-main .meta { color: var(--dz-text-sub); }
+
+.blog-main .hero-date::before,
+.blog-main .meta::before { background: var(--dz-text-sub); }
+
+/* Article table of contents stays directly below the fixed global header. */
+.blog-main > .nav,
+.blog-main > .article-nav {
+  position: sticky;
+  top: 64px;
+  z-index: 210;
+  border-bottom: 1px solid var(--dz-line);
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  backdrop-filter: saturate(180%) blur(8px);
+}
+
+.blog-main > .article-nav .wrap {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.blog-main > .article-nav a {
+  padding: 9px 11px;
+  border-radius: 4px;
+  color: var(--dz-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.blog-main > .article-nav a:hover {
+  color: var(--dz-accent-text);
+  background: var(--dz-alpha-primary);
+}
+
+/* All legacy dark bands become light paper bands, matching the supplied v2. */
+.blog-main .section-dark {
+  background: var(--dz-paper);
+  color: var(--dz-text);
+}
+
+.blog-main .section-dark h2,
+.blog-main .section-dark h3,
+.blog-main .section-dark h4,
+.blog-main .section-dark h5,
+.blog-main .section-dark strong { color: var(--dz-heading); }
+
+.blog-main .section-dark p,
+.blog-main .section-dark li { color: var(--dz-text); }
+
+.blog-main .section-dark .section-divider { background: var(--dz-line); }
+
+.blog-main .section-dark .section-num { color: var(--dz-accent-text); }
+
+.blog-main > section:not(.pjt-series) {
+  padding: 64px 0;
+  border-bottom: 1px solid var(--dz-line);
+}
+
+.blog-main > section:not(.pjt-series):nth-of-type(even) { background: var(--dz-paper); }
+
+.blog-main .hero-inner,
+.blog-main .nav-inner,
+.blog-main .section-inner,
+.blog-main .footer-inner,
+.blog-main > section > .wrap,
+.blog-main > .article-nav > .wrap,
+.blog-main .hero > .wrap {
+  max-width: var(--dz-container);
+}
+
+.blog-main .dz-card,
+.blog-main .dz-card-accent,
+.blog-main .callout,
+.blog-main .info-card,
+.blog-main .table-wrap,
+.blog-main .code-block,
+.blog-main .arch,
+.blog-main .formula-box {
+  box-shadow: none;
+}
+
+.blog-main .dz-card-accent,
+.blog-main .callout { border-left-color: var(--dz-accent); }
+
+.blog-main .footer {
+  border-top: 1px solid var(--dz-line);
+  background: var(--dz-paper);
+  color: var(--dz-text-sub);
+}
+
+@media (max-width: 1024px) {
+  :root { --dz-sidebar: 180px; }
+  .blog-sidebar-inner { padding: 28px 14px 32px; }
+  .blog-category-list a { padding: 8px; font-size: 12px; }
+}
+
+@media (max-width: 768px) {
+  html { scroll-padding-top: 16px; }
+
+  .blog-masthead { height: auto; min-height: 58px; }
+  .blog-masthead-inner {
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    padding: 8px 16px;
+  }
+  .blog-title { font-size: 17px; }
+  .blog-global-nav { gap: 0; }
+  .blog-global-nav a { min-height: 34px; padding: 0 8px; font-size: 12px; }
+
+  .blog-layout { display: block; }
+  .blog-sidebar { border-right: 0; border-bottom: 1px solid var(--dz-line); }
+  .blog-sidebar-inner {
+    position: static;
+    max-height: none;
+    overflow-x: auto;
+    padding: 10px 16px;
+  }
+  .blog-sidebar-label { display: none; }
+  .blog-category-list { display: flex; gap: 6px; width: max-content; }
+  .blog-category-list li + li { margin-top: 0; }
+  .blog-category-list a {
+    padding: 6px 10px;
+    border: 1px solid var(--dz-line);
+    white-space: nowrap;
+  }
+
+  .blog-main > .nav,
+  .blog-main > .article-nav { position: relative; top: auto; }
+
+  .blog-main .hero { padding: 56px 0 44px; }
+  .blog-main > section:not(.pjt-series) { padding: 52px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
