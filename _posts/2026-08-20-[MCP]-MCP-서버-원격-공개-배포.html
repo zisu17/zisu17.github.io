@@ -1,10 +1,11 @@
 ---
 layout: none
-title: "[MCP] 한국 세법 자료 통합 MCP 원격 공개 배포"
+title: "[세법MCP] 한국 세법 자료 통합 MCP 원격 공개 배포"
 excerpt: "한국 세법 MCP 서버를 원격 HTTP로 전환하고 Cloud Run과 Firebase Hosting으로 공개 배포하면서 적용한 설정과 운영 시 주의할 점을 정리한다."
 categories:
-  - Dev
+  - Project
 tags:
+  - 세법MCP
   - Dev
   - MCP
   - FastMCP
@@ -13,7 +14,7 @@ tags:
   - GCP
 permalink: /dev/mcp-remote-deploy/
 date: 2026-08-20
-last_modified_at: 2026-08-20
+last_modified_at: 2026-08-28
 ---
 
 <!DOCTYPE html>
@@ -21,7 +22,7 @@ last_modified_at: 2026-08-20
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[MCP] 한국 세법 자료 통합 MCP 원격 공개 배포</title>
+<title>[세법MCP] 한국 세법 자료 통합 MCP 원격 공개 배포</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
 <style>
@@ -794,17 +795,19 @@ code.inline {
 .fade-up { opacity: 0; transform: translateY(16px); transition: all 0.5s var(--dz-ease); }
 .fade-up.is-in { opacity: 1; transform: none; }
 </style>
+<link href="{{ '/assets/css/project-post-shell.css' | relative_url }}" rel="stylesheet">
 </head>
 <body>
 
 <!-- Scroll Progress -->
 <div class="scroll-progress" id="scrollProgress"></div>
 
+{% include project-blog-shell-start.html %}
+
 <!-- ==================== HERO ==================== -->
 <header class="hero">
   <div class="hero-inner">
-    <a class="home-link" href="/">What's your ETL?</a>
-    <span class="hero-badge">MCP / Remote Deploy</span>
+    <span class="hero-badge">세법MCP / Remote Deploy</span>
     <h1>한국 세법 자료 통합 MCP<br>원격 공개 배포</h1>
     <p class="excerpt">직접 만든 한국 세법 MCP 서버를 Cloud Run에 공개 배포하면서 적용한 설정을 정리했다. 원격 HTTP 전환, Cloud Run 배포, Firebase Hosting 연결, Spend cap과 운영 시 주의할 점을 실제 구성 기준으로 다룬다.</p>
     <div class="hero-meta">
@@ -1267,9 +1270,11 @@ gcloud artifacts repositories set-cleanup-policies cloud-run-source-deploy \
 <footer class="footer">
   <div class="footer-inner">
     <p>FastMCP 3.x · Cloud Run(asia-northeast3) · Firebase Hosting 기준 · MCP 서버 원격 공개 배포</p>
-    <p>MCP / FastMCP / Cloud Run / Firebase Hosting / GCP</p>
+    <p>세법MCP / FastMCP / Cloud Run / Firebase Hosting / GCP</p>
   </div>
 </footer>
+
+{% include project-blog-shell-end.html %}
 
 <!-- Back to Top -->
 <div class="back-to-top" id="backToTop" role="button" aria-label="맨 위로">
@@ -1362,4 +1367,3 @@ document.querySelectorAll('.nav a').forEach(function(a) {
 
 </body>
 </html>
-
