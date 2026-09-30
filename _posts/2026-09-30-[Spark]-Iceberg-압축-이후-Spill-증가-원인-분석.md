@@ -18,7 +18,7 @@ toc: true
 toc_sticky: true
 
 date: 2026-09-30
-last_modified_at: 2026-09-30
+last_modified_at: 2026-10-01
 ---
 
 <style>
@@ -463,27 +463,9 @@ Spill을 없애려면 태스크가 읽는 파일의 크기를 줄이거나 태�
 
 ## 8. executor 메모리 결정
 
-### 8.1 vCPU당 메모리
+메모리 크기는 이 잡에서 측정한 태스크 peak와 Spill 지점, 파일별 행 데이터 배율, YARN 자원 여유를 기준으로 정했다. 8g에서는 1.38~1.41GB 부근에서 Spill이 시작됐고, 12g에서는 태스크당 최대 몫이 2.34GB로 늘어난다.
 
-공개된 서비스의 기본 사양을 vCPU당 할당 메모리로 환산했다. [EMR Serverless](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/jobs-spark.html)는 executor 기본값이 코어 4개에 힙 14GB이고 오버헤드 10%가 별도로 더해진다. [AWS Glue](https://docs.aws.amazon.com/glue/latest/dg/worker-types.html)의 G.1X 워커는 4 vCPU에 16GB, 메모리 최적화형 R.1X는 4 vCPU에 32GB다. [Azure Synapse](https://learn.microsoft.com/en-us/azure/synapse-analytics/spark/apache-spark-pool-configurations)의 Small 노드는 4 vCore에 32GB다.
-
-<figure class="tlv">
-<div class="tlv-legend"><span>야간 적재 설정</span><span style="--sw:var(--tlv-line-2)">공개 서비스 기본 사양</span></div>
-<div class="tlv-bars">
-  <div class="tlv-bar-row"><span class="k">AWS Glue R.1X</span><span class="tlv-track"><i class="is-mute" style="--w:100.0%"></i></span><span class="v">8.00</span></div>
-  <div class="tlv-bar-row"><span class="k">Azure Synapse Small</span><span class="tlv-track"><i class="is-mute" style="--w:100.0%"></i></span><span class="v">8.00</span></div>
-  <div class="tlv-bar-row"><span class="k">야간 적재 16g + 2G</span><span class="tlv-track"><i style="--w:56.2%"></i></span><span class="v">4.50</span></div>
-  <div class="tlv-bar-row"><span class="k">AWS Glue G.1X</span><span class="tlv-track"><i class="is-mute" style="--w:50.0%"></i></span><span class="v">4.00</span></div>
-  <div class="tlv-bar-row"><span class="k">EMR Serverless 기본</span><span class="tlv-track"><i class="is-mute" style="--w:48.1%"></i></span><span class="v">3.85</span></div>
-  <div class="tlv-bar-row"><span class="k">야간 적재 12g + 2G</span><span class="tlv-track"><i style="--w:43.8%"></i></span><span class="v">3.50</span></div>
-  <div class="tlv-bar-row"><span class="k">야간 적재 현재 8g + 1G</span><span class="tlv-track"><i style="--w:28.1%"></i></span><span class="v">2.25</span></div>
-</div>
-<figcaption class="tlv-cap"><b>그림 5.</b> vCPU당 할당 메모리(GB). 야간 적재의 현재 설정이 비교한 사양 중 가장 낮다.</figcaption>
-</figure>
-
-EMR Serverless 기본 executor와 Glue G.1X는 vCPU당 4GB 안팎이고 Glue R.1X와 Synapse 노드는 8GB다. Glue는 메모리 부족이 잦거나 셔플·집계가 많은 워크로드에 메모리 최적화형(R)을 권한다. Glue와 Synapse는 워커 또는 노드 전체 메모리 기준이라 executor 힙으로 환산하면 이보다 작다. 야간 적재의 현재 설정은 2.25GB로 비교한 사양 중 가장 낮고 12g로 올리면 3.5GB로 EMR Serverless 기본값과 비슷해진다.
-
-### 8.2 클러스터 여유
+### 8.1 클러스터 여유
 
 | executor 설정 | 컨테이너 | 노드당(30GB) | 앱당 최대(5개) | 태스크당 최대 몫 |
 |---|--:|--:|--:|--:|
@@ -495,16 +477,16 @@ YARN 노드는 30GB·16코어이고 컨테이너 최대 크기는 30GB다. 이 �
 
 코어를 줄이는 방법(12g 3코어)은 태스크 몫이 3.12GB로 16g 4코어(3.14GB)와 같지만 동시 코어가 15개로 25% 줄어든다.
 
-### 8.3 조회 쪽 자원
+### 8.2 조회 쪽 자원
 
 이 테이블들을 읽는 다른 잡도 같은 파일을 받는다. 매일 아침 실행되는 조회 잡은 스탠드얼론 클러스터에서 executor 16g, 코어 4개로 고정돼 돌고 기본 `memory.fraction`(0.6)에서 태스크당 상한이 2.36GB다. 이 잡은 executor가 8g였을 때 한 스테이지에서 7.56GB를 Spill했고 16g로 올린 뒤 Spill이 0이 됐으며 잡 시간은 약 11분으로 그대로였다. 이때 `memory.fraction`이 0.8에서 0.6으로 함께 바뀌어 실효 풀은 6.17GB에서 9.42GB로 53% 늘었다. 조회 쪽은 야간 적재보다 여유가 있다. 압축 목표(128MB)는 더 약한 쪽인 야간 적재가 받을 수 있는 크기를 기준으로 본다.
 
-### 8.4 결정
+### 8.3 결정
 
 executor를 12g(오버헤드 2G)로 올리는 쪽을 먼저 적용하기로 했다.
 
 - 압축 목표를 낮춰도 `product_stat`의 기준선 Spill은 줄지 않는다. 이 파일들이 재작성 대상이 되려면 목표가 약 51MB보다 작아야 하고 그 값은 큰 테이블의 파일 수를 늘린다.
-- 12g는 태스크당 상한이 2.34GB이고 오버헤드까지 더하면 vCPU당 3.5GB로 EMR Serverless 기본값과 비슷하다. 노드당 executor는 3개에서 2개로 줄지만 30GB 안에 들어간다.
+- 12g에서는 태스크당 최대 몫이 2.34GB로 늘어 실측 배율로 계산한 행 데이터 1.9~2.0GB를 수용할 수 있다. 노드당 executor는 3개에서 2개로 줄지만 30GB 안에 들어간다.
 - 변경이 세션 생성 설정 두 줄이라 압축 목표와 압축 판정 기준을 건드리지 않는다.
 
 16g는 여유가 크지만 노드당 executor가 1개로 줄고 앱당 90GB를 쓴다. 12g로 기준선 Spill이 사라지는지 본 뒤 잔여 Spill이 남으면 올린다.
@@ -539,7 +521,6 @@ executor를 12g(오버헤드 2G)로 올리는 쪽을 먼저 적용하기로 했�
 - 12g의 효과는 아직 확인하지 않았다. 위 계획이 첫 검증이다.
 - 6.2절의 파일 크기는 네 테이블의 배율과 8g에서 Spill한 태스크의 값으로 계산한 추정이다. 12g와 16g의 상한은 풀 크기 비례로 늘린 값이고 직접 측정하지 않았다.
 - 파일 수가 늘어 생기는 계획 수립과 오브젝트 스토리지 요청 비용은 측정하지 않았다.
-- 공개 서비스의 값은 기본 사양이라 이 워크로드에 그대로 맞는다는 근거는 아니다.
 
 ---
 
