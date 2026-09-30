@@ -16,6 +16,7 @@ permalink: /data/semantic-layer-vs-text-to-sql-2026/
 
 toc: true
 toc_sticky: true
+published: false
 
 date: 2026-09-17
 last_modified_at: 2026-09-17

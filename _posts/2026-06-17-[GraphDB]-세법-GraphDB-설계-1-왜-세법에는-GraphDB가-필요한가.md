@@ -15,6 +15,7 @@ permalink: /data/tax-graphdb-series-01-concept/
 
 toc: true
 toc_sticky: true
+published: false
 
 date: 2026-06-17
 last_modified_at: 2026-06-17
