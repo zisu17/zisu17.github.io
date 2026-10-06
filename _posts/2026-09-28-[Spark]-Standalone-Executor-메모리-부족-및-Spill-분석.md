@@ -1,6 +1,8 @@
 ---
 title: "[Spark] Standalone Executor 메모리 부족 및 Spill 분석"
 excerpt: "Spark standalone 집계 잡에서 반복되던 Spill과 Executor OOM을 History Server 지표로 추적하고, Executor 메모리와 memory.fraction 조정 전후를 비교한다."
+nav_section: data
+nav_topic: processing
 
 categories:
   - Data Engineering

@@ -1,6 +1,8 @@
 ---
 title: "[Kafka] 카프카(Kafka) 커넥트와 커넥터"
 excerpt: "메시지큐 카프카의 커넥트와 커넥터 개념 및 실습"
+nav_section: data
+nav_topic: pipelines
 
 categories:
   - Data Engineering

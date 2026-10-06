@@ -1,6 +1,8 @@
 ---  
 title: "[Spark] 스파크 JDBC 파티셔닝 최적화"  
 excerpt: "스파크에서 JDBC 파티셔닝을 활용해 데이터 읽기 최적화 하기"  
+nav_section: data
+nav_topic: processing
   
 categories:
   - Data Engineering

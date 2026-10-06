@@ -1,6 +1,8 @@
 ---
 title: "[Spark] Spill 및 디스크 사용량 증가 원인 분석"
 excerpt: "Spark on YARN 환경에서 워커 디스크 사용량이 계속 증가한 원인을 추적하고, TRIM과 셔플 파티션 조정, Iceberg merge-on-read 전환 전후를 비교한다."
+nav_section: data
+nav_topic: processing
 
 categories:
   - Data Engineering
