@@ -1,6 +1,8 @@
 ---
 title: "[Iceberg] REST Catalog와 테이블 모니터링"
 excerpt: "Iceberg REST Catalog가 무엇이고 왜 필요한지, 그리고 이 카탈로그를 축으로 테이블을 어떻게 모니터링하는지 정리한다."
+nav_section: data
+nav_topic: lakehouse
 
 categories:
   - Data

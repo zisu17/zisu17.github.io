@@ -1,6 +1,8 @@
 ---
 title: "[PostgreSQL] 컬럼 간 상관관계가 파티션별 실행 계획에 미치는 영향"
 excerpt: "PostgreSQL에서 correlation이 가리키는 두 대상(플래너 통계와 데이터 관계)을 구분하고, 상관된 컬럼으로 파티셔닝했을 때 파티션별 통계와 접근 경로 선택이 읽기량을 줄이는 원리를 정리한다."
+nav_section: data
+nav_topic: database
 
 categories:
   - Database

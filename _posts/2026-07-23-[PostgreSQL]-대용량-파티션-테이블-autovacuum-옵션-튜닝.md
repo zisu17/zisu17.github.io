@@ -1,6 +1,8 @@
 ---
 title: "[PostgreSQL] 대용량·파티션 테이블의 autovacuum 옵션 튜닝"
 excerpt: "대용량·파티션 테이블에서 autovacuum이 늦게 도는 이유와, scale_factor·insert·cost_limit 옵션을 왜 어떻게 조정해야 하는지를 정리한다."
+nav_section: data
+nav_topic: database
 
 categories:
   - Database

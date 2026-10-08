@@ -1,6 +1,8 @@
 ---
 title: "[Iceberg] Apache Iceberg 테이블 유지 관리 작업과 자동화 설계"
 excerpt: "Apache Iceberg 테이블에 쌓이는 스냅샷과 작은 파일을 다루는 유지 관리 작업과 이를 안전하게 자동화하는 방법을 정리한다."
+nav_section: data
+nav_topic: lakehouse
 
 categories:
   - Data Engineering

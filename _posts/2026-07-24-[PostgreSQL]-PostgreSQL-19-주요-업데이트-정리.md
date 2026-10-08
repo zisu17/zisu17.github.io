@@ -1,6 +1,8 @@
 ---
 title: "[PostgreSQL] PostgreSQL 19 주요 업데이트 정리"
 excerpt: "PostgreSQL 19 베타에서 공개된 주요 신규 기능과 변경점을 정리한다."
+nav_section: data
+nav_topic: database
 
 categories:
   - Data

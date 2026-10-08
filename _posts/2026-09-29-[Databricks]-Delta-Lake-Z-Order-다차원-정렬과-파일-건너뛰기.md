@@ -1,6 +1,8 @@
 ---
 title: "[Databricks] Delta Lake Z-Order 다차원 정렬과 파일 건너뛰기"
 excerpt: "Delta Lake의 Z-Order가 여러 컬럼 값을 같은 파일에 모으는 원리와 정렬 방식별로 읽는 파일 수의 차이, 적용 방법과 컬럼 선택 기준, Liquid Clustering과의 차이를 정리한다."
+nav_section: data
+nav_topic: lakehouse
 categories:
   - Data Engineering
 tags:

@@ -1,6 +1,8 @@
 ---
 title: "[Citus] Citus 컬럼형 분산 테이블 설정"
 excerpt: "Citus에서 컬럼형 분산 테이블을 만들고 상태를 확인하는 방법과 증분 반영이 필요한 데이터를 하이브리드로 운영하는 방법을 정리한다."
+nav_section: data
+nav_topic: database
 
 categories:
   - Database
