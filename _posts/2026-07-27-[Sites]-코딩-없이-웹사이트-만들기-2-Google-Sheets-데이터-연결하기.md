@@ -1,6 +1,8 @@
 ---
 title: "[AI] ChatGPT로 웹사이트 만들기 2편: Google Sheets 데이터 연결하기"
 excerpt: "Google Sheets의 데이터를 Apps Script로 전달하고 Sites 화면에서 안전하게 불러오는 과정을 정리한다."
+nav_section: engineering
+nav_topic: applications
 
 categories:
   - Web

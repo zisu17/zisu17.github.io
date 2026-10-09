@@ -1,6 +1,8 @@
 ---
 title: "[Datamates] dbt 모델에 컬럼 레벨 리니지 구축하기"
 excerpt: "dbt 산출물과 카탈로그 정보를 SQLGlot으로 분석해 컬럼 간 의존 관계를 계산하고 PostgreSQL에 메타데이터로 저장한 과정을 정리한다."
+nav_section: projects
+nav_topic: datamates
 
 categories:
   - Project

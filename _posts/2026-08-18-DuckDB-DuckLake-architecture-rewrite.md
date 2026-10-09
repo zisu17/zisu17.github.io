@@ -1,6 +1,8 @@
 ---
 title: "[Datamates] 데이터 플랫폼의 Spark + Iceberg를 DuckDB + DuckLake로 전환한 이유"
 excerpt: "데이터 규모에 비해 무거웠던 Spark와 Iceberg 중심 구조를 DuckDB와 DuckLake로 단순화한 과정과 결과를 정리한다."
+nav_section: projects
+nav_topic: datamates
 
 categories:
   - Project

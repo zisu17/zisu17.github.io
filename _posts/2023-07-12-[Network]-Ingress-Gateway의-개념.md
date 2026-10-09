@@ -1,6 +1,8 @@
 ---
 title: "[Network] Ingress Gateway의 개념"
 excerpt: "Ingress Gateway와 Controller의 개념"
+nav_section: engineering
+nav_topic: infrastructure
 
 categories:
   - Infra
