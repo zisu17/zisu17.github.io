@@ -1,0 +1,6 @@
+{% assign topic_posts = site.posts | where: "nav_topic", include.taxonomy %}
+{%- for post in topic_posts -%}
+  {%- unless post.hidden -%}
+    {% include archive-single.html %}
+  {%- endunless -%}
+{%- endfor -%}

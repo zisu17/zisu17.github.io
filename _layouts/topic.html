@@ -1,0 +1,10 @@
+---
+layout: archive
+---
+
+{{ content }}
+
+{% assign entries_layout = page.entries_layout | default: 'list' %}
+<div class="entries-{{ entries_layout }}">
+  {% include posts-topic.html taxonomy=page.nav_topic type=entries_layout %}
+</div>
