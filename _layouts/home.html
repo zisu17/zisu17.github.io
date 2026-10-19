@@ -1,22 +1,102 @@
 ---
-layout: archive
+layout: default
 ---
 
-{{ content }}
-
-<h3 class="archive__subtitle">{{ site.data.ui-text[site.locale].recent_posts | default: "Recent Posts" }}</h3>
-
 {% if paginator %}
-  {% assign posts = paginator.posts %}
+  {% assign home_posts = paginator.posts %}
 {% else %}
-  {% assign posts = site.posts %}
+  {% assign home_posts = site.posts %}
 {% endif %}
 
-{% assign entries_layout = page.entries_layout | default: 'list' %}
-<div class="entries-{{ entries_layout }}">
-  {% for post in posts %}
-    {% include archive-single.html type=entries_layout %}
-  {% endfor %}
-</div>
+{% assign data_posts = site.posts | where: "nav_section", "data" %}
+{% assign engineering_posts = site.posts | where: "nav_section", "engineering" %}
+{% assign project_posts = site.posts | where: "nav_section", "projects" %}
+{% assign home_tags = "Spark,Iceberg,Airflow,dbt,PostgreSQL,Parquet,DuckDB,MCP" | split: "," %}
 
-{% include paginator.html %}
+<div id="main" class="home-dashboard" role="main">
+  <aside class="home-dashboard__nav" aria-label="블로그 카테고리">
+    {% if site.author.avatar %}
+      <a class="home-profile" href="{{ '/about/' | relative_url }}" aria-label="About 페이지로 이동">
+        <img src="{{ site.author.avatar | relative_url }}" alt="{{ site.author.name | default: site.title }} 프로필">
+      </a>
+    {% endif %}
+
+    <nav class="home-topic-nav" aria-label="글 주제">
+      {% for group in site.data.navigation.categories %}
+        <section class="home-topic-group">
+          <h2>{{ group.title }}</h2>
+          {% if group.children %}
+            <ul>
+              {% for child in group.children %}
+                {% assign child_posts = site.posts | where: "nav_topic", child.key %}
+                <li>
+                  <a href="{{ child.url | relative_url }}">
+                    <span>{{ child.title }}</span>
+                    <span class="home-topic-count">{{ child_posts | size }}</span>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <main class="home-dashboard__feed">
+    <header class="home-feed-header">
+      <h1>Recent posts</h1>
+      <p>전체 <strong>{{ site.posts | size }}</strong>편</p>
+    </header>
+
+    <div class="home-post-list">
+      {% for post in home_posts %}
+        <article class="home-post-card" itemscope itemtype="https://schema.org/CreativeWork">
+          <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y.%m.%d" }}</time>
+          <h2 itemprop="headline"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+          {% if post.excerpt %}
+            <p itemprop="description">{{ post.excerpt | markdownify | strip_html | truncate: 180 }}</p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+
+    {% include paginator.html %}
+  </main>
+
+  <aside class="home-dashboard__aside" aria-label="블로그 정보">
+    <section class="home-panel home-panel--search">
+      <a href="{{ '/categories/' | relative_url }}">글 주제 둘러보기</a>
+    </section>
+
+    <section class="home-panel">
+      <header><h2>분야별 글</h2><span>전체 {{ site.posts | size }}편</span></header>
+      <div class="home-section-bar" role="img" aria-label="DATA {{ data_posts | size }}편, ENGINEERING {{ engineering_posts | size }}편, PROJECTS {{ project_posts | size }}편">
+        <i style="--count: {{ data_posts | size }}"></i>
+        <i style="--count: {{ engineering_posts | size }}"></i>
+        <i style="--count: {{ project_posts | size }}"></i>
+      </div>
+      <dl class="home-section-counts">
+        <div><dt>DATA</dt><dd>{{ data_posts | size }}</dd></div>
+        <div><dt>ENGINEERING</dt><dd>{{ engineering_posts | size }}</dd></div>
+        <div><dt>PROJECTS</dt><dd>{{ project_posts | size }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="home-panel">
+      <header><h2>태그</h2></header>
+      <div class="home-tag-list">
+        {% for tag in home_tags %}<span>{{ tag }}</span>{% endfor %}
+      </div>
+    </section>
+
+    <section class="home-panel home-panel--about">
+      <header><h2>{{ site.title }}</h2></header>
+      <p>{{ site.description }}</p>
+      <div>
+        <a href="https://github.com/zisu17" rel="noopener noreferrer">GitHub</a>
+        <a href="{{ '/about/' | relative_url }}">About</a>
+      </div>
+    </section>
+  </aside>
+</div>
