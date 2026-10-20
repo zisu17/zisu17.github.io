@@ -15,32 +15,7 @@ layout: default
 
 <div id="main" class="home-dashboard" role="main">
   <aside class="home-dashboard__nav" aria-label="블로그 카테고리">
-    {% if site.author.avatar %}
-      <a class="home-profile" href="{{ '/about/' | relative_url }}" aria-label="About 페이지로 이동">
-        <img src="{{ site.author.avatar | relative_url }}" alt="{{ site.author.name | default: site.title }} 프로필">
-      </a>
-    {% endif %}
-
-    <nav class="home-topic-nav" aria-label="글 주제">
-      {% for group in site.data.navigation.categories %}
-        <section class="home-topic-group">
-          <h2>{{ group.title }}</h2>
-          {% if group.children %}
-            <ul>
-              {% for child in group.children %}
-                {% assign child_posts = site.posts | where: "nav_topic", child.key %}
-                <li>
-                  <a href="{{ child.url | relative_url }}">
-                    <span>{{ child.title }}</span>
-                    <span class="home-topic-count">{{ child_posts | size }}</span>
-                  </a>
-                </li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        </section>
-      {% endfor %}
-    </nav>
+    {% include home-topic-nav.html %}
   </aside>
 
   <main class="home-dashboard__feed">
