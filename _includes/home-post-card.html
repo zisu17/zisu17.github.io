@@ -1,0 +1,12 @@
+<article class="home-post-card" itemscope itemtype="https://schema.org/CreativeWork">
+  <div class="home-post-card__meta">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14">
+      <path d="M7 2v3M17 2v3M3.5 9h17M5 4h14a1.5 1.5 0 0 1 1.5 1.5v14A1.5 1.5 0 0 1 19 21H5a1.5 1.5 0 0 1-1.5-1.5v-14A1.5 1.5 0 0 1 5 4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>
+    <time datetime="{{ include.post.date | date_to_xmlschema }}">{{ include.post.date | date: "%Y.%m.%d" }}</time>
+  </div>
+  <h2 itemprop="headline"><a href="{{ include.post.url | relative_url }}">{{ include.post.title }}</a></h2>
+  {% if include.post.excerpt %}
+    <p itemprop="description">{{ include.post.excerpt | markdownify | strip_html | truncate: 180 }}</p>
+  {% endif %}
+</article>

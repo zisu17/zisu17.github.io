@@ -26,13 +26,7 @@ layout: default
 
     <div class="home-post-list">
       {% for post in home_posts %}
-        <article class="home-post-card" itemscope itemtype="https://schema.org/CreativeWork">
-          <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y.%m.%d" }}</time>
-          <h2 itemprop="headline"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
-          {% if post.excerpt %}
-            <p itemprop="description">{{ post.excerpt | markdownify | strip_html | truncate: 180 }}</p>
-          {% endif %}
-        </article>
+        {% include home-post-card.html post=post %}
       {% endfor %}
     </div>
 
