@@ -10,24 +10,28 @@
     </li> -->
     
     {% for nav in navigation %}
-      <li>
+      <li class="nav__group{% if page.nav_section == nav.key %} is-active{% endif %}">
         {% if nav.url %}
               <a href="{{ nav.url | relative_url }}"><span class="nav__sub-title">{{ nav.title }}</span></a>
         {% else %}
           <!-- title -->
               <span class="nav__sub-title">{{ nav.title }}</span>
-              <hr>
         {% endif %}
 
         {% if nav.children != null %}
-        <ul>
+        <ul class="nav__children">
           {% for child in nav.children %}
-            <!-- sub-title -->
-            {% for category in site.categories %}
-              {% if category[0] == child.title %}
-                <li><a href="{{ child.url | relative_url }}"{% if child.url == page.url %} class="active"{% endif %}>{{ child.title }} ({{ category | last | size }})</a></li>
-              {% endif %}
-            {% endfor %}
+            {% assign child_posts = site.posts | where: "nav_topic", child.key %}
+            {% assign child_active = false %}
+            {% if child.url == page.url or child.key == page.nav_topic %}
+              {% assign child_active = true %}
+            {% endif %}
+            <li>
+              <a href="{{ child.url | relative_url }}"{% if child_active %} class="active" aria-current="page"{% endif %}>
+                <span>{{ child.title }}</span>
+                <span class="nav__count">{{ child_posts | size }}</span>
+              </a>
+            </li>
           {% endfor %}
         </ul>
         {% endif %}

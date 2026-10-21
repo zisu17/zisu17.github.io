@@ -17,19 +17,44 @@ main:
 
 # sidebar navigation (categories)
 categories:
-  - title: "Project"
-    url: /categories/project/
-  - title: "Data Engineering"
-    url: /categories/data-engineering/
   - title: "Data"
-    url: /categories/data/
-  - title: "Database"
-    url: /categories/database/
-  - title: "Computer Science"
-    url: /categories/computer-science/
-  - title: "Web"
-    url: /categories/web/
-  - title: "Infra"
-    url: /categories/infra/
-  - title: "Dev"
-    url: /categories/dev/
+    key: data
+    children:
+      - title: "Processing"
+        key: processing
+        url: /topics/processing/
+      - title: "Pipelines & Ingestion"
+        key: pipelines
+        url: /topics/pipelines/
+      - title: "Lakehouse"
+        key: lakehouse
+        url: /topics/lakehouse/
+      - title: "Modeling & Analytics"
+        key: modeling
+        url: /topics/modeling/
+      - title: "Database"
+        key: database
+        url: /topics/database/
+
+  - title: "Engineering"
+    key: engineering
+    children:
+      - title: "Programming & CS"
+        key: programming
+        url: /topics/programming/
+      - title: "Infrastructure"
+        key: infrastructure
+        url: /topics/infrastructure/
+      - title: "Applications & Automation"
+        key: applications
+        url: /topics/applications/
+
+  - title: "Projects"
+    key: projects
+    children:
+      - title: "Datamates"
+        key: datamates
+        url: /topics/datamates/
+      - title: "Tax MCP"
+        key: tax-mcp
+        url: /topics/tax-mcp/
