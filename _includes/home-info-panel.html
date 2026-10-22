@@ -1,0 +1,38 @@
+{% assign data_posts = site.posts | where: "nav_section", "data" %}
+{% assign engineering_posts = site.posts | where: "nav_section", "engineering" %}
+{% assign project_posts = site.posts | where: "nav_section", "projects" %}
+{% assign home_tags = "Spark,Iceberg,Airflow,dbt,PostgreSQL,Parquet,DuckDB,MCP" | split: "," %}
+
+<section class="home-panel home-panel--search">
+  <a href="{{ '/categories/' | relative_url }}">글 주제 둘러보기</a>
+</section>
+
+<section class="home-panel">
+  <header><h2>분야별 글</h2><span>전체 {{ site.posts | size }}편</span></header>
+  <div class="home-section-bar" role="img" aria-label="DATA {{ data_posts | size }}편, ENGINEERING {{ engineering_posts | size }}편, PROJECTS {{ project_posts | size }}편">
+    <i style="--count: {{ data_posts | size }}"></i>
+    <i style="--count: {{ engineering_posts | size }}"></i>
+    <i style="--count: {{ project_posts | size }}"></i>
+  </div>
+  <dl class="home-section-counts">
+    <div><dt>DATA</dt><dd>{{ data_posts | size }}</dd></div>
+    <div><dt>ENGINEERING</dt><dd>{{ engineering_posts | size }}</dd></div>
+    <div><dt>PROJECTS</dt><dd>{{ project_posts | size }}</dd></div>
+  </dl>
+</section>
+
+<section class="home-panel">
+  <header><h2>태그</h2></header>
+  <div class="home-tag-list">
+    {% for tag in home_tags %}<span>{{ tag }}</span>{% endfor %}
+  </div>
+</section>
+
+<section class="home-panel home-panel--about">
+  <header><h2>{{ site.title }}</h2></header>
+  <p>{{ site.description }}</p>
+  <div>
+    <a href="https://github.com/zisu17" rel="noopener noreferrer">GitHub</a>
+    <a href="{{ '/about/' | relative_url }}">About</a>
+  </div>
+</section>
