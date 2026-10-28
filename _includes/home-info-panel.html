@@ -4,7 +4,13 @@
 {% assign home_tags = "Spark,Iceberg,Airflow,dbt,PostgreSQL,Parquet,DuckDB,MCP" | split: "," %}
 
 <section class="home-panel home-panel--search">
-  <a href="{{ '/categories/' | relative_url }}">글 주제 둘러보기</a>
+  <button class="search__toggle" type="button" aria-label="블로그 글 검색 열기">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+      <circle cx="10.8" cy="10.8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="m16 16 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <span>글 제목·내용 검색</span>
+  </button>
 </section>
 
 {% assign calendar_post = site.posts.first %}

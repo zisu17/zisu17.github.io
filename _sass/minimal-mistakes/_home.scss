@@ -220,6 +220,16 @@ $home-line: rgba(0, 0, 0, 0.1);
     text-decoration: none;
     cursor: pointer;
   }
+
+  button {
+    gap: 0.55rem;
+    text-align: left;
+
+    &:hover {
+      color: $home-accent;
+      background: rgba($home-accent, 0.04);
+    }
+  }
 }
 
 .home-section-bar {
