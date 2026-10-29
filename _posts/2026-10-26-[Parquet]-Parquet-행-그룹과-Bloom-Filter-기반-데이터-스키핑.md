@@ -548,7 +548,7 @@ Bloom Filter는 해당 값이 실제로 없는 행 그룹만 건너뛰게 한다
 
 ### 6.3 정렬 키와의 관계
 
-정렬(sort order, Z-order)은 파일과 행 그룹의 값 범위를 좁혀 1·2단계의 min/max가 거르게 만든다. Bloom Filter는 그 뒤의 4단계를 보강한다. 정렬 첫 키로 쓰는 컬럼에는 Bloom Filter가 거의 필요 없고 정렬로 범위를 좁히기 어려운 두 번째 이후 컬럼이나 정렬 키로 쓰지 않는 고유 ID 컬럼이 Bloom Filter 대상이다. 정렬을 이용한 파일 단위 데이터 스키핑은 [Delta Lake Z-Order 다차원 정렬과 파일 건너뛰기](/data/delta-lake-zorder-data-skipping/)에서 다뤘다.
+정렬(sort order, Z-order)은 파일과 행 그룹의 값 범위를 좁혀 1·2단계의 min/max가 거르게 만든다. Bloom Filter는 그 뒤의 4단계를 보강한다. 정렬 첫 키로 쓰는 컬럼에는 Bloom Filter가 거의 필요 없고 정렬로 범위를 좁히기 어려운 두 번째 이후 컬럼이나 정렬 키로 쓰지 않는 고유 ID 컬럼이 Bloom Filter 대상이다. 정렬을 이용한 파일 단위 데이터 스키핑은 [Delta Lake Z-Order 다차원 정렬과 파일 스키핑](/data/delta-lake-zorder-data-skipping/)에서 다뤘다.
 
 ---
 
