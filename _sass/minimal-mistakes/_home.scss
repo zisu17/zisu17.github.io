@@ -42,6 +42,10 @@ $home-line: rgba(0, 0, 0, 0.1);
     }
   }
 
+  .masthead .search__toggle {
+    display: none;
+  }
+
   .page__footer {
     color: $home-muted;
     background: #fff;
@@ -589,5 +593,12 @@ $home-line: rgba(0, 0, 0, 0.1);
   .home-panel--search,
   .home-panel--about {
     grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #main.home-dashboard,
+  .layout--home .masthead {
+    animation: none;
   }
 }
