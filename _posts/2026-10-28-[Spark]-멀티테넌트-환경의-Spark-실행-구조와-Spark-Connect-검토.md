@@ -20,7 +20,7 @@ toc: true
 toc_sticky: true
 
 date: 2026-10-28
-last_modified_at: 2026-10-28
+last_modified_at: 2026-10-29
 ---
 
 <style>
@@ -159,9 +159,9 @@ figure.tlv{display:block;padding:0}
 
 ## 1. 개요
 
-고객사와 사용자 단위로 데이터를 분리해야 하는 데이터 플랫폼에서 Spark를 어떻게 운영하고 있는지, 실행 창구를 Spark Connect로 바꾸는 검토가 어디서 막혔는지를 정리한다. 테넌트는 고객사(회사번호)와 그 안의 서비스 단위이고 테넌트마다 랜딩존 버킷·Iceberg 카탈로그·저장소 자격 증명이 다르다. 한 테넌트의 세션이 다른 테넌트의 자격이나 데이터에 닿지 않아야 한다는 것이 이 플랫폼의 전제다.
+여러 테넌트의 데이터를 분리해야 하는 데이터 플랫폼에서 Spark를 어떻게 운영하고 있는지, 실행 창구를 Spark Connect로 바꾸는 검토가 어디서 막혔는지를 정리한다. 테넌트마다 랜딩존 버킷·Iceberg 카탈로그·저장소 자격 증명이 다르다. 한 테넌트의 세션이 다른 테넌트의 자격이나 데이터에 닿지 않아야 한다는 것이 이 플랫폼의 전제다.
 
-Spark를 쓰는 워크로드는 둘이다. Airflow가 돌리는 테넌트별 적재 파이프라인과, 사용자가 화면에서 컬럼 단위로 기법을 적용해 보는 가명화 서비스다. 둘 다 Livy 세션을 실행 창구로 쓴다.
+Spark를 쓰는 워크로드는 Airflow 파이프라인과 사용자 요청을 처리하는 API 서비스다. 둘 다 Livy 세션을 실행 창구로 쓴다.
 
 본문의 테넌트 이름, 버킷, 카탈로그, 큐 이름은 예시 값으로 바꿨다. Spark 3.5 기준이다.
 
@@ -169,39 +169,37 @@ Spark를 쓰는 워크로드는 둘이다. Airflow가 돌리는 테넌트별 적
 
 ## 2. 실행 구조
 
-### 2.1 적재 파이프라인의 세션 단위
+### 2.1 파이프라인의 세션 단위
 
-적재 파이프라인은 Airflow DAG가 직접 데이터를 처리하지 않는다. DAG의 각 태스크가 PySpark 코드 문자열을 만들어 Livy REST API로 보내고 Livy가 띄운 Spark 세션이 그 코드를 실행한다. 같은 데이터가 Iceberg(원본 보관·대용량 분석)와 Citus/PostgreSQL(서비스 조회용 마트)에 함께 적재된다.
+Airflow DAG가 직접 데이터를 처리하지 않는다. DAG의 각 태스크가 PySpark 코드 문자열을 만들어 Livy REST API로 보내고 Livy가 띄운 Spark 세션이 그 코드를 실행한다.
 
-세션은 테넌트 적재 실행 단위로 만든다. 프로젝트 DAG가 시작할 때 `POST /sessions`로 세션을 하나 만들고 그 테넌트의 테이블을 순서대로 statement로 보낸 뒤, 끝나면 세션을 삭제한다. 세션 하나가 Spark 애플리케이션 하나이므로 테넌트 실행마다 드라이버와 익스큐터가 새로 뜨고 끝나면 내려간다.
+세션은 테넌트의 파이프라인 실행 단위로 만든다. DAG가 시작할 때 `POST /sessions`로 세션을 하나 만들고 처리할 작업을 순서대로 statement로 보낸 뒤, 끝나면 세션을 삭제한다. 세션 하나가 Spark 애플리케이션 하나이므로 테넌트 실행마다 드라이버와 익스큐터가 새로 뜨고 끝나면 내려간다.
 
-### 2.2 가명화 서비스의 세션 단위
+### 2.2 서비스의 세션 단위
 
-가명화 서비스는 배치가 아니다. 사용자가 데이터셋을 고르고 컬럼마다 삭제·범주화·라운딩·암호화 같은 기법을 적용해 보며 결과를 확인한다. FastAPI 서버가 요청을 받으면 별도의 세션 관리 서비스가 그 사용자(회사·사용자 번호) 전용 Livy 세션을 만들고 작업이 끝나거나 유휴 시간이 지나면 삭제한다.
+서비스는 사용자 요청을 연속으로 처리하는 대화형 워크로드다. API 서버가 요청을 받으면 세션 관리 서비스가 사용자 전용 Livy 세션을 만들고 작업이 끝나거나 유휴 시간이 지나면 삭제한다.
 
-가명화 기법 모듈은 zip으로 묶어 HDFS에 올려 두고 세션 생성 요청의 `pyFiles`로 세션에 싣는다. API 서버가 statement로 보내는 코드는 모듈을 호출하는 몇 줄뿐이다.
+처리 로직은 zip으로 묶어 HDFS에 올려 두고 세션 생성 요청의 `pyFiles`로 세션에 싣는다. API 서버가 statement로 보내는 코드는 모듈을 호출하는 몇 줄뿐이다.
 
 ```python
-code = textwrap.dedent(f"""
-from Generalization import Rounding
-print(Rounding(sample_df).round(column_name='{column_name}', digit={digit}, preview='T'))
-""")
+params = json.dumps({"column_name": column_name, "option": option})
+code = "from service_jobs import run_task\nprint(run_task(sample_df, %s))" % params
 send_request(f"{session_endpoint}/addcode", data={"code": code, "kind": "pyspark", "session_id": session_id})
 ```
 
-`sample_df`는 데이터 로드 단계에서 세션에 만들어 둔 표본 DataFrame이다. 사용자가 기법을 바꿔 가며 여러 번 호출해도 같은 세션의 같은 DataFrame을 쓰고 결과는 모듈이 JSON으로 `print`한 statement 출력으로 돌아온다.
+`sample_df`는 데이터 로드 단계에서 세션에 만들어 둔 표본 DataFrame이다. 사용자가 여러 번 요청해도 같은 세션의 같은 DataFrame을 쓰고 결과는 statement 출력으로 돌아온다.
 
 두 워크로드의 세션 단위를 함께 놓으면 다음과 같다.
 
 <figure class="tlv">
 <div class="tlv-scroll" style="--tlv-min:560px">
-<svg class="tlv-svg" viewBox="0 0 630 240" role="img" aria-label="적재 파이프라인은 테넌트 실행마다, 가명화 서비스는 사용자 작업마다 Livy가 별도 Spark 애플리케이션을 띄우고 끝나면 세션과 함께 내린다">
+<svg class="tlv-svg" viewBox="0 0 630 240" role="img" aria-label="파이프라인은 테넌트 실행마다, 서비스는 사용자 작업마다 Livy가 별도 Spark 애플리케이션을 띄우고 끝나면 세션과 함께 내린다">
   <defs><marker id="tlv-2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,1 L10,5 L0,9 z"/></marker></defs>
   <rect class="box" x="0" y="40" width="130" height="56" rx="4"/>
   <text class="t" x="14" y="62">Airflow DAG</text>
-  <text class="s" x="14" y="79">적재 코드 생성</text>
+  <text class="s" x="14" y="79">작업 코드 생성</text>
   <rect class="box" x="0" y="150" width="130" height="56" rx="4"/>
-  <text class="t" x="14" y="172">가명화 API</text>
+  <text class="t" x="14" y="172">API 서비스</text>
   <text class="s" x="14" y="189">호출 코드 생성</text>
   <path class="wire" d="M130 178 H146" marker-end="url(#tlv-2-arrow)"/>
   <rect class="box" x="148" y="150" width="124" height="56" rx="4"/>
@@ -216,16 +214,16 @@ send_request(f"{session_endpoint}/addcode", data={"code": code, "kind": "pyspark
   <path class="wire" d="M400 123 H415 V53 H428" marker-end="url(#tlv-2-arrow)"/>
   <path class="wire" d="M400 123 H415 V193 H428" marker-end="url(#tlv-2-arrow)"/>
   <rect class="accent" x="430" y="20" width="200" height="66" rx="4"/>
-  <text class="t" x="444" y="42">테넌트 A 적재 세션</text>
+  <text class="t" x="444" y="42">테넌트 A 파이프라인 세션</text>
   <text class="s" x="444" y="59">Spark 앱 1개 · 실행마다 생성·종료</text>
   <text class="l" x="444" y="76">YARN 큐 tenant_a</text>
   <rect class="accent" x="430" y="160" width="200" height="66" rx="4"/>
-  <text class="t" x="444" y="182">사용자 U 가명화 세션</text>
+  <text class="t" x="444" y="182">사용자 U 서비스 세션</text>
   <text class="s" x="444" y="199">Spark 앱 1개 · 작업 단위 생성·종료</text>
   <text class="l" x="444" y="216">pyFiles: HDFS 모듈 zip</text>
 </svg>
 </div>
-<figcaption class="tlv-cap"><b>그림 1.</b> 적재는 테넌트 실행마다, 가명화는 사용자 작업마다 별도 Spark 애플리케이션이 뜨고 세션 삭제와 함께 내려간다.</figcaption>
+<figcaption class="tlv-cap"><b>그림 1.</b> 파이프라인은 테넌트 실행마다, 서비스는 사용자 작업마다 별도 Spark 애플리케이션이 뜨고 세션 삭제와 함께 내려간다.</figcaption>
 </figure>
 
 ### 2.3 클러스터 매니저
@@ -234,7 +232,7 @@ send_request(f"{session_endpoint}/addcode", data={"code": code, "kind": "pyspark
 
 ### 2.4 세션 기동 비용
 
-이 구조의 비용은 세션마다 드는 기동 시간이다. 세션을 만들면 드라이버 JVM 기동, SparkContext 초기화, 익스큐터 확보를 거쳐야 첫 statement를 받을 수 있고 YARN 큐가 차 있으면 더 기다린다. 적재 실행이 짧은 테넌트일수록 전체 실행에서 기동이 차지하는 비중이 커지고 가명화 서비스에서는 사용자가 첫 화면에서 기다리는 시간이 된다. Spark Connect를 검토하게 된 출발점이 이 비용이었다.
+이 구조의 비용은 세션마다 드는 기동 시간이다. 세션을 만들면 드라이버 JVM 기동, SparkContext 초기화, 익스큐터 확보를 거쳐야 첫 statement를 받을 수 있고 YARN 큐가 차 있으면 더 기다린다. 파이프라인 실행이 짧을수록 전체 실행에서 기동이 차지하는 비중이 커지고 서비스에서는 첫 요청의 대기 시간이 된다. Spark Connect를 검토하게 된 출발점이 이 비용이었다.
 
 ---
 
@@ -254,7 +252,7 @@ send_request(f"{session_endpoint}/addcode", data={"code": code, "kind": "pyspark
 
 자격 증명은 세션을 만드는 시점에 외부 자격 저장소에서 테넌트 단위로 조회해 넣고 세션이 끝나면 반납한다. DAG 설정이나 코드에 값을 두지 않는다.
 
-가명화 서비스에서는 데이터 로드 요청의 접근 권한을 먼저 확인하고 그 테넌트의 테이블만 세션에 읽어 들인다.
+서비스에서는 데이터 로드 요청의 접근 권한을 먼저 확인하고 그 테넌트의 테이블만 세션에 읽어 들인다.
 
 ### 3.2 컴포넌트별 자격 전달 경로
 
@@ -293,7 +291,7 @@ send_request(f"{session_endpoint}/addcode", data={"code": code, "kind": "pyspark
 
 ### 4.1 검토 배경
 
-Spark Connect는 미리 떠 있는 Spark 애플리케이션에 gRPC로 붙어 DataFrame 연산 계획을 보내는 방식이다. 세션 생성이 즉시 끝나고 클라이언트에 Spark 의존성이 필요 없다. 이미 조회 도구(메타데이터 조회 MCP, 대시보드) 백엔드로는 Connect 서버를 쓰고 있었다. 여러 호출자가 짧은 쿼리를 산발적으로 던지는 워크로드에서는 Livy처럼 호출자마다 세션을 잡는 모델이 맞지 않기 때문이다. 같은 서버를 적재 파이프라인과 가명화 서비스의 실행 창구로도 쓸 수 있으면 2.4의 기동 비용이 사라진다.
+Spark Connect는 미리 떠 있는 Spark 애플리케이션에 gRPC로 붙어 DataFrame 연산 계획을 보내는 방식이다. 세션 생성이 즉시 끝나고 클라이언트에 Spark 의존성이 필요 없다. 이미 조회 도구(메타데이터 조회 MCP, 대시보드) 백엔드로는 Connect 서버를 쓰고 있었다. 여러 호출자가 짧은 쿼리를 산발적으로 던지는 워크로드에서는 Livy처럼 호출자마다 세션을 잡는 모델이 맞지 않기 때문이다. 같은 서버를 파이프라인과 서비스의 실행 창구로도 쓸 수 있으면 2.4의 기동 비용이 사라진다.
 
 ### 4.2 PoC 결과
 
@@ -301,7 +299,7 @@ Spark Connect는 미리 떠 있는 Spark 애플리케이션에 gRPC로 붙어 Da
 
 첫째, 자격 증명과 카탈로그를 세션 단위로 나눌 수 없었다. Iceberg 카탈로그 설정은 세션 runtime conf로 줄 수 있지만, `spark.hadoop.fs.s3a.*` 같은 Hadoop 설정과 추가 jar, 드라이버·익스큐터 메모리는 서버 기동 시 한 번 정해지고 모든 세션이 공유한다. 테넌트 둘을 붙이면 두 테넌트의 S3 키가 같은 드라이버 JVM과 같은 익스큐터 프로세스에 함께 올라간다. 세션 conf로 넣은 카탈로그 자격도 프로세스 경계가 없으니 격리라고 부를 수 없다. 같은 JVM에서 도는 다른 세션의 UDF가 그 값에 닿는 것을 Spark가 막지 않는다.
 
-둘째, 드라이버 메모리가 경합했다. 한 테넌트의 큰 적재가 드라이버 heap을 쓰는 동안 같은 서버의 다른 세션 작업이 실패했다. Livy 구조에서는 그 테넌트의 세션 하나가 죽고 끝나는 일이, Connect 서버에서는 서버에 붙은 모든 테넌트의 문제가 된다.
+둘째, 드라이버 메모리가 경합했다. 한 테넌트의 큰 파이프라인 작업이 드라이버 heap을 쓰는 동안 같은 서버의 다른 세션 작업이 실패했다. Livy 구조에서는 그 테넌트의 세션 하나가 죽고 끝나는 일이, Connect 서버에서는 서버에 붙은 모든 테넌트의 문제가 된다.
 
 <figure class="tlv">
 <div class="tlv-scroll" style="--tlv-min:560px">
@@ -335,13 +333,13 @@ Spark Connect는 미리 떠 있는 Spark 애플리케이션에 gRPC로 붙어 Da
   <rect class="bad" x="358" y="136" width="244" height="40" rx="3"/>
   <text class="s" x="480" y="160" text-anchor="middle">Executor 공유 · 자격 A·B 함께</text>
   <text class="l" x="358" y="198">fs.s3a.* · jar · 메모리: 기동 시 고정</text>
-  <text class="l" x="358" y="216">A의 큰 적재 → B 세션 실패</text>
+  <text class="l" x="358" y="216">A의 큰 작업 → B 세션 실패</text>
 </svg>
 </div>
 <figcaption class="tlv-cap"><b>그림 3.</b> Livy는 테넌트마다 프로세스가 다르지만, Connect 서버는 모든 테넌트 세션이 드라이버 JVM과 익스큐터를 공유한다.</figcaption>
 </figure>
 
-테넌트마다 Connect 서버를 따로 두는 방법도 있지만 그러면 적재가 없는 시간에도 테넌트 수만큼 드라이버가 떠 있고 서버 수만큼 관리 대상이 늘어난다. 하루 몇 번 도는 배치에 상주 서버를 두는 것은 세션 기동 시간을 줄이려고 더 큰 비용을 내는 선택이었다. 가명화 서비스는 대화형이라 Connect의 세션 모델과 가깝지만 회사 단위로 데이터가 분리되어야 하는 요구가 같아서 같은 판단이 적용된다.
+테넌트마다 Connect 서버를 따로 두는 방법도 있지만 그러면 작업이 없는 시간에도 테넌트 수만큼 드라이버가 떠 있고 서버 수만큼 관리 대상이 늘어난다. 하루 몇 번 도는 배치에 상주 서버를 두는 것은 세션 기동 시간을 줄이려고 더 큰 비용을 내는 선택이었다. 서비스는 대화형이라 Connect의 세션 모델과 가깝지만 테넌트 단위로 데이터가 분리되어야 하는 요구가 같아서 같은 판단이 적용된다.
 
 ### 4.3 공유 서버 방식의 해법
 
@@ -358,15 +356,15 @@ Spark Connect는 미리 떠 있는 Spark 애플리케이션에 gRPC로 붙어 Da
 
 ### 5.1 코드 문자열 전달
 
-세션 모델은 유지하되 코드 전달 방식에는 문제가 남아 있다. 적재 파이프라인은 각 단계의 PySpark 코드 전체가 f-string으로 조립된 문자열이라 단위 테스트가 어렵고 테이블명·경로 같은 외부 입력값이 코드 문자열에 그대로 섞인다. 입력값이 실행 코드가 되는 구조라 코드 인젝션을 막을 별도 장치가 필요하다.
+세션 모델은 유지하되 코드 전달 방식에는 문제가 남아 있다. 파이프라인은 각 단계의 PySpark 코드 전체가 f-string으로 조립된 문자열이라 단위 테스트가 어렵고 테이블명·경로 같은 외부 입력값이 코드 문자열에 그대로 섞인다. 입력값이 실행 코드가 되는 구조라 코드 인젝션을 막을 별도 장치가 필요하다.
 
 단계 사이의 데이터도 Spark 세션의 전역 변수로 넘어간다. 앞 단계 코드가 만든 DataFrame을 뒤 단계가 같은 변수명으로 읽는 방식이라 DAG 정의만 봐서는 의존 관계가 보이지 않는다.
 
-가명화 서비스는 처리 로직이 모듈 zip에 있고 statement에는 호출 코드만 들어가므로 이 문제가 작다.
+서비스는 처리 로직이 모듈 zip에 있고 statement에는 호출 코드만 들어가므로 이 문제가 작다.
 
 ### 5.2 패키지 배포와 호출 분리
 
-적재 파이프라인의 개선 방향은 가명화 서비스와 같은 형태다. 처리 로직을 Python 패키지로 만들어 세션 생성 시 `pyFiles`로 올리고 각 단계는 함수 호출 한 줄만 statement로 보낸다.
+파이프라인의 개선 방향은 서비스와 같은 형태다. 처리 로직을 Python 패키지로 만들어 세션 생성 시 `pyFiles`로 올리고 각 단계는 함수 호출 한 줄만 statement로 보낸다.
 
 <div class="tlv tlv-tabs" id="tlv-5-code">
   <div class="tlv-panel" data-label="변경 전 · 코드 문자열"><div class="tlv-panel-title">변경 전 · 코드 문자열</div><div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>code = f"""
@@ -391,11 +389,11 @@ Livy는 2020년 2월 0.7.0 이후 3년 8개월 동안 릴리스가 없었고 202
 
 ## 6. 정리
 
-- 적재는 테넌트 실행마다, 가명화는 사용자 작업마다 Livy 세션(= Spark 애플리케이션)을 만들고 끝나면 삭제한다. 테넌트 자격·카탈로그·큐는 세션 요청 안에서만 존재한다.
+- 파이프라인은 테넌트 실행마다, 서비스는 사용자 작업마다 Livy 세션(= Spark 애플리케이션)을 만들고 끝나면 삭제한다. 테넌트 자격·카탈로그·큐는 세션 요청 안에서만 존재한다.
 - S3 자격은 s3a와 Iceberg S3FileIO가 다른 키를 읽으므로 세션 요청에 두 경로를 모두 채운다.
-- Spark Connect PoC에서는 Hadoop 설정·jar·메모리가 서버 기동 시 고정되어 테넌트 자격이 한 JVM에 모였고 한 테넌트의 적재가 드라이버 메모리를 쓰는 동안 다른 세션이 실패했다. 고객사 단위 분리가 요구인 워크로드에는 쓰지 않는다.
+- Spark Connect PoC에서는 Hadoop 설정·jar·메모리가 서버 기동 시 고정되어 테넌트 자격이 한 JVM에 모였고 한 테넌트의 작업이 드라이버 메모리를 쓰는 동안 다른 세션이 실패했다. 고객사 단위 분리가 요구인 워크로드에는 쓰지 않는다.
 - Connect 서버는 여러 호출자가 짧은 쿼리를 보내는 조회 도구 백엔드로만 쓴다.
-- 남은 문제는 세션 모델이 아니라 코드 문자열 전달이다. 가명화 서비스처럼 처리 로직을 pyFiles 패키지로 올리고 statement는 호출 한 줄만 보내는 방식으로 바꾼다.
+- 남은 문제는 세션 모델이 아니라 코드 문자열 전달이다. 서비스처럼 처리 로직을 pyFiles 패키지로 올리고 statement는 호출 한 줄만 보내는 방식으로 바꾼다.
 
 ---
 
