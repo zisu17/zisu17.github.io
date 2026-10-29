@@ -17,7 +17,7 @@ $home-line: rgba(0, 0, 0, 0.1);
   }
 
   .masthead__inner-wrap {
-    max-width: 1320px;
+    max-width: 1500px;
     padding: 1.25rem 2.5rem;
   }
 
@@ -42,10 +42,6 @@ $home-line: rgba(0, 0, 0, 0.1);
     }
   }
 
-  .masthead .search__toggle {
-    display: none;
-  }
-
   .page__footer {
     color: $home-muted;
     background: #fff;
@@ -55,12 +51,13 @@ $home-line: rgba(0, 0, 0, 0.1);
 
 #main.home-dashboard {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 3rem 2.5rem 4rem;
   display: grid;
-  grid-template-columns: minmax(180px, 200px) minmax(0, 1fr) minmax(240px, 280px);
-  gap: 3.5rem;
+  grid-template-areas: "nav feed aside";
+  grid-template-columns: minmax(170px, 190px) minmax(560px, 1fr) minmax(230px, 260px);
+  gap: 2rem;
   align-items: start;
   box-sizing: border-box;
 }
@@ -72,11 +69,17 @@ $home-line: rgba(0, 0, 0, 0.1);
 }
 
 .home-dashboard__nav {
+  grid-area: nav;
   position: sticky;
   top: 8rem;
 }
 
+.home-dashboard__feed {
+  grid-area: feed;
+}
+
 .home-dashboard__aside {
+  grid-area: aside;
   position: static;
   display: grid;
   gap: 1.25rem;
@@ -492,26 +495,51 @@ $home-line: rgba(0, 0, 0, 0.1);
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1239px) {
   #main.home-dashboard {
-    grid-template-columns: minmax(180px, 200px) minmax(0, 1fr);
-    gap: 3rem;
+    padding: 2.5rem 2rem 4rem;
+    grid-template-areas:
+      "nav nav"
+      "feed aside";
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    column-gap: 2rem;
+    row-gap: 2.5rem;
+  }
+
+  .home-dashboard__nav {
+    position: static;
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: 1.75rem;
+    align-items: start;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid $home-line;
   }
 
   .home-dashboard__aside {
-    position: static;
-    grid-column: 2;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .home-panel--search,
-  .home-panel--about {
-    grid-column: 1 / -1;
+  .home-profile {
+    margin: 0;
+
+    img {
+      width: 4.5rem;
+      height: 4.5rem;
+    }
+  }
+
+  .home-topic-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .home-topic-group a {
+    font-size: 0.82rem;
   }
 }
 
-@media (max-width: 780px) {
+@media (max-width: 800px) {
   .layout--home {
     .masthead__inner-wrap {
       padding-right: 1.25rem;
@@ -524,36 +552,67 @@ $home-line: rgba(0, 0, 0, 0.1);
   }
 
   #main.home-dashboard {
-    padding: 2rem 1.25rem 3rem;
+    padding: 1.75rem 1.25rem 3rem;
+    grid-template-areas:
+      "nav"
+      "feed"
+      "aside";
     grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem;
-  }
-
-  .home-dashboard__feed {
-    grid-row: 1;
+    gap: 2rem;
   }
 
   .home-dashboard__nav {
     position: static;
-    grid-row: 2;
+    display: block;
+    padding-bottom: 1.5rem;
   }
 
   .home-dashboard__aside {
-    grid-row: 3;
-    grid-column: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-profile {
-    margin-bottom: 1.5rem;
+    margin: 0 0 1.25rem 0;
 
     img {
-      width: 5rem;
-      height: 5rem;
+      width: 3.75rem;
+      height: 3.75rem;
     }
   }
 
   .home-topic-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .home-topic-group {
+    min-width: 0;
+
+    h2 {
+      margin-bottom: 0.45rem;
+    }
+
+    ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0;
+      border-left: 0;
+    }
+
+    li {
+      flex: 0 0 auto;
+    }
+
+    a {
+      min-height: 2rem;
+      padding: 0.35rem 0.65rem;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.025);
+      border: 1px solid $home-line;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
   }
 
   .home-post-card h2 {
@@ -585,14 +644,8 @@ $home-line: rgba(0, 0, 0, 0.1);
     }
   }
 
-  .home-topic-nav,
   .home-dashboard__aside {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .home-panel--search,
-  .home-panel--about {
-    grid-column: auto;
   }
 }
 
