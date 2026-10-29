@@ -71,13 +71,13 @@ $home-line: rgba(0, 0, 0, 0.1);
   min-width: 0;
 }
 
-.home-dashboard__nav,
-.home-dashboard__aside {
+.home-dashboard__nav {
   position: sticky;
   top: 8rem;
 }
 
 .home-dashboard__aside {
+  position: static;
   display: grid;
   gap: 1.25rem;
 }
