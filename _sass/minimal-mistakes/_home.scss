@@ -42,6 +42,10 @@ $home-line: rgba(0, 0, 0, 0.1);
     }
   }
 
+  .masthead .search__toggle {
+    display: none;
+  }
+
   .page__footer {
     margin-top: 1.5rem;
     color: $home-muted;
@@ -330,35 +334,6 @@ $home-line: rgba(0, 0, 0, 0.1);
     background: rgba(0, 0, 0, 0.055);
     border-radius: 999px;
     font-size: 0.64rem;
-  }
-}
-
-.home-panel--about {
-  p {
-    margin: 0 0 0.65rem;
-    color: rgba(0, 0, 0, 0.68);
-    font-size: 0.7rem;
-    line-height: 1.65;
-  }
-
-  > div {
-    display: flex;
-    gap: 0.4rem;
-  }
-
-  a {
-    padding: 0.28rem 0.55rem;
-    color: $home-ink;
-    border: 1px solid $home-line;
-    border-radius: 0.35rem;
-    font-size: 0.66rem;
-    font-weight: 650;
-    text-decoration: none;
-
-    &:hover {
-      color: $home-accent;
-      border-color: rgba($home-accent, 0.45);
-    }
   }
 }
 
