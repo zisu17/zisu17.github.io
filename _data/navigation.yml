@@ -58,3 +58,6 @@ categories:
       - title: "Tax MCP"
         key: tax-mcp
         url: /topics/tax-mcp/
+      - title: "Text2SQL"
+        key: text2sql
+        url: /topics/text2sql/
