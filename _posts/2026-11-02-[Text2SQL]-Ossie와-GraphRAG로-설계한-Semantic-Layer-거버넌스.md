@@ -1,5 +1,5 @@
 ---
-title: "[Text2SQL] Ossie와 GraphRAG로 설계한 Semantic Layer 거버넌스"
+title: "[Text2SQL] Ossie와 GraphRAG를 활용한 Semantic Layer 설계"
 excerpt: "Text2SQL 에이전트의 시맨틱 레이어를 Apache Ossie YAML로 두고 사용자 요청과 답변 기록에서 나온 정의 초안을 PR로 승인한 뒤 GraphRAG용 그래프로 내보내는 거버넌스 흐름 설계를 정리한다."
 nav_section: projects
 nav_topic: text2sql
