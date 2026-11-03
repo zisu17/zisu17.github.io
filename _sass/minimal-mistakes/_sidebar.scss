@@ -23,11 +23,18 @@
 
     &.sticky {
       overflow-y: auto;
+      overscroll-behavior-y: contain;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
       top: 3.5em;
       /* calculate height of nav list
          viewport height - nav height - masthead x-padding
       */
       max-height: calc(100vh - #{$nav-height} - 2em);
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
     }
   }
 
@@ -92,6 +99,15 @@
       position: sticky;
       top: 7em;
       float: right;
+      max-height: calc(100vh - 8em);
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
     }
   }
 

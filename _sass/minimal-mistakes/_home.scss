@@ -116,7 +116,12 @@ $home-line: rgba(0, 0, 0, 0.1);
     height: calc(100vh - 6.5rem);
     overflow-y: auto;
     overscroll-behavior-y: contain;
-    scrollbar-gutter: stable;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .home-dashboard__aside {
