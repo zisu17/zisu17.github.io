@@ -108,6 +108,22 @@ $home-line: rgba(0, 0, 0, 0.1);
   gap: 1rem;
 }
 
+@media (min-width: 1240px) {
+  .home-dashboard__nav,
+  .home-dashboard__aside {
+    position: sticky;
+    top: 5.5rem;
+    height: calc(100vh - 6.5rem);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .home-dashboard__aside {
+    align-content: start;
+  }
+}
+
 .home-profile {
   display: inline-flex;
   margin: 0 0 1.5rem 0.2rem;
