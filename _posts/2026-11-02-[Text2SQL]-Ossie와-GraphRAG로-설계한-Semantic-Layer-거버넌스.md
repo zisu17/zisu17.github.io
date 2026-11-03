@@ -1,6 +1,6 @@
 ---
 title: "[Text2SQL] Ossie와 GraphRAG로 설계한 Semantic Layer 거버넌스"
-excerpt: "Text2SQL 에이전트의 시맨틱 레이어를 Apache Ossie YAML로 두고, 사용자 요청과 답변 기록에서 나온 정의 초안을 PR로 승인한 뒤 GraphRAG용 그래프로 내보내는 거버넌스 흐름 설계를 정리한다."
+excerpt: "Text2SQL 에이전트의 시맨틱 레이어를 Apache Ossie YAML로 두고 사용자 요청과 답변 기록에서 나온 정의 초안을 PR로 승인한 뒤 GraphRAG용 그래프로 내보내는 거버넌스 흐름 설계를 정리한다."
 nav_section: projects
 nav_topic: text2sql
 
@@ -157,7 +157,7 @@ figure.tlv{display:block;padding:0}
 @media (prefers-reduced-motion:reduce){.tlv *{transition:none !important;animation:none !important}}
 </style>
 
-## 1. 스키마에 없는 업무 규칙을 어떻게 전달할까
+## 1. 배경
 
 데이터 모델을 설계하다 보면 현업 담당자만 이해하는 지표나 용어가 많다. 같은 매출이라도 어떤 주문 상태를 빼고 계산하는지 어느 테이블을 어떤 키로 이어야 하는지는 스키마에 드러나지 않는다. LLM에는 이런 도메인 지식이 없어서 데이터 추출이나 분석에 쓸 SQL을 명확하게 만들기 어렵다고 느꼈다. 모델의 SQL 생성 능력이 좋아지는 것과는 별개의 문제이고 앞서 살펴본 dbt Labs 벤치마크에서도 정확도가 중요한 영역에서는 잘 모델링된 시맨틱 레이어가 여전히 앞섰다.
 
