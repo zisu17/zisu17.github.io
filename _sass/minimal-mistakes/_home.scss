@@ -218,6 +218,7 @@ $home-line: rgba(0, 0, 0, 0.1);
 }
 
 .home-panel--search {
+  min-height: calc(2.4rem + 2px);
   padding: 0;
   overflow: hidden;
 
@@ -238,6 +239,7 @@ $home-line: rgba(0, 0, 0, 0.1);
   }
 
   button {
+    margin: 0;
     gap: 0.55rem;
     text-align: left;
 
