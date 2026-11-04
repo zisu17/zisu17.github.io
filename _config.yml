@@ -101,6 +101,7 @@ analytics:
 author:
   name: "zisu17" # 블로그 닉네임
   avatar: "/assets/images/meee.png" # 블로그 프로필 사진
+  home: "/about/"
   #   bio              : "hi all!"
   # location         : "Seoul, Korea"
   # email            : "youremailhere@xxxxxx.com"

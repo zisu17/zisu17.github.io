@@ -3,9 +3,7 @@ layout: default
 ---
 
 <div id="main" class="home-dashboard" role="main">
-  <aside class="home-dashboard__nav" aria-label="블로그 카테고리">
-    {% include home-topic-nav.html %}
-  </aside>
+  {% include blog-sidebar.html dashboard=true %}
 
   <main class="home-dashboard__feed">
     {{ content }}
