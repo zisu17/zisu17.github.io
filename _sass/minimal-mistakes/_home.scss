@@ -424,13 +424,8 @@ $home-aside-width-wide: 235px;
 
 @media (max-width: 800px) {
   #main.home-dashboard {
-    padding: 1.5rem 1rem 2.5rem;
-    grid-template-areas:
-      "nav"
-      "feed"
-      "aside";
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.75rem;
+    display: block;
+    padding: 0 1rem 2.5rem;
   }
 
   .home-dashboard__nav {
