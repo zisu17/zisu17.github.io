@@ -46,6 +46,9 @@
 <section class="home-panel">
   <header><h2>태그</h2></header>
   <div class="home-tag-list">
-    {% for tag in home_tags %}<span>{{ tag }}</span>{% endfor %}
+    {% for tag in home_tags %}
+      {% assign tag_slug = tag | slugify | downcase %}
+      <a href="{{ '/tags/#' | append: tag_slug | relative_url }}">{{ tag }}</a>
+    {% endfor %}
   </div>
 </section>

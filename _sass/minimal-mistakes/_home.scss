@@ -295,12 +295,19 @@ $home-line: rgba(0, 0, 0, 0.1);
   flex-wrap: wrap;
   gap: 0.35rem;
 
-  span {
+  a {
     padding: 0.15rem 0.45rem;
     color: rgba(0, 0, 0, 0.68);
     background: rgba(0, 0, 0, 0.055);
     border-radius: 999px;
     font-size: 0.64rem;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: darken($home-accent, 8%);
+      background: rgba($home-accent, 0.12);
+    }
   }
 }
 
