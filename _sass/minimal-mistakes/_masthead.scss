@@ -43,6 +43,17 @@
   }
 }
 
+.masthead .search__toggle {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .masthead {
+    -webkit-animation: none;
+    animation: none;
+  }
+}
+
 .site-logo img {
   max-height: 2.2rem;
   /* 2022.01.23 rotate */
