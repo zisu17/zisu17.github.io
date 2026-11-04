@@ -13,7 +13,7 @@
           {% for child in group.children %}
             {% assign child_posts = site.posts | where: "nav_topic", child.key %}
             <li>
-              <a href="{{ child.url | relative_url }}">
+              <a href="{{ child.url | relative_url }}"{% if page.nav_topic == child.key %} aria-current="page"{% endif %}>
                 <span>{{ child.title }}</span>
                 <span class="home-topic-count">{{ child_posts | size }}</span>
               </a>

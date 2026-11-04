@@ -7,7 +7,8 @@ $home-ink: rgba(0, 0, 0, 0.86);
 $home-muted: rgba(0, 0, 0, 0.58);
 $home-line: rgba(0, 0, 0, 0.1);
 
-.layout--home {
+.layout--home,
+.layout--topic {
   color: $home-ink;
   background: #fff;
 
@@ -157,6 +158,11 @@ $home-line: rgba(0, 0, 0, 0.1);
 
     &:hover {
       color: $home-accent;
+    }
+
+    &[aria-current="page"] {
+      color: $home-accent;
+      font-weight: 700;
     }
   }
 }
@@ -508,7 +514,8 @@ $home-line: rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 800px) {
-  .layout--home {
+  .layout--home,
+  .layout--topic {
     .page__footer {
       margin-top: 0.75rem;
 
