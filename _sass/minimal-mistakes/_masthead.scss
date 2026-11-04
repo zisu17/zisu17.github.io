@@ -61,13 +61,6 @@
   transform-origin: 50% 50%;
 }
 
-.site-logo,
-.site-title {
-  &:focus:not(:focus-visible) {
-    outline: none;
-  }
-}
-
 @keyframes rotate_image{
 	25% {
     transform: rotate(5deg);

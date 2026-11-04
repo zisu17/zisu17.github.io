@@ -153,6 +153,10 @@ a {
     @extend %tab-focus;
   }
 
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
   &:visited {
     color: $link-color-visited;
   }
