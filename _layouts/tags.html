@@ -1,6 +1,11 @@
 ---
-layout: archive
+layout: dashboard
 ---
+
+<header class="home-feed-header">
+  <h1 id="page-title">{{ page.title }}</h1>
+  <p>전체 <strong>{{ site.tags | size }}</strong>개</p>
+</header>
 
 {{ content }}
 

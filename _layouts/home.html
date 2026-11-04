@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: dashboard
 ---
 
 {% if paginator %}
@@ -8,29 +8,15 @@ layout: default
   {% assign home_posts = site.posts %}
 {% endif %}
 
-<div id="main" class="home-dashboard" role="main">
-  <aside class="home-dashboard__nav" aria-label="블로그 카테고리">
-    {% include home-topic-nav.html %}
-  </aside>
+<header class="home-feed-header">
+  <h1>Recent posts</h1>
+  <p>전체 <strong>{{ site.posts | size }}</strong>편</p>
+</header>
 
-  <main class="home-dashboard__feed">
-    <header class="home-feed-header">
-      <h1>Recent posts</h1>
-      <p>전체 <strong>{{ site.posts | size }}</strong>편</p>
-    </header>
-
-    <div class="home-post-list">
-      {% for post in home_posts %}
-        {% include home-post-card.html post=post %}
-      {% endfor %}
-    </div>
-
-    {% include paginator.html %}
-  </main>
-
-  <aside class="home-dashboard__aside" aria-label="블로그 정보">
-    {% include home-info-panel.html %}
-  </aside>
+<div class="home-post-list">
+  {% for post in home_posts %}
+    {% include home-post-card.html post=post %}
+  {% endfor %}
 </div>
 
-<script src="{{ '/assets/js/home-calendar.js' | relative_url }}" defer></script>
+{% include paginator.html %}

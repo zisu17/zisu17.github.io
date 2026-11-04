@@ -1,10 +1,20 @@
 ---
-layout: archive
+layout: dashboard
 ---
+
+{% assign tag_posts = site.tags[page.taxonomy] %}
+
+<header class="home-feed-header">
+  <h1 id="page-title">{{ page.title }}</h1>
+  <p>전체 <strong>{{ tag_posts | size }}</strong>편</p>
+</header>
 
 {{ content }}
 
-{% assign entries_layout = page.entries_layout | default: 'list' %}
-<div class="entries-{{ entries_layout }}">
-  {% include posts-tag.html taxonomy=page.taxonomy type=entries_layout %}
+<div class="home-post-list">
+  {% for post in tag_posts %}
+    {% unless post.hidden %}
+      {% include home-post-card.html post=post %}
+    {% endunless %}
+  {% endfor %}
 </div>
