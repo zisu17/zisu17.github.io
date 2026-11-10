@@ -1,5 +1,5 @@
 ---
-title: "[Text2SQL] AI Agent를 Claude Code·Codex 플러그인으로 구성하기"
+title: "[Text2SQL] Claude Code·Codex용 AI Agent 플러그인 구성하기"
 excerpt: "OpenAI Agents SDK로 만들던 독립형 Text-to-SQL 에이전트를 Claude Code와 Codex에서 함께 쓰는 플러그인으로 바꾸면서 정한 역할 분리, 명령줄 도구, 안전장치, 공용 배포 구조를 정리한다."
 nav_section: projects
 nav_topic: text2sql
@@ -167,7 +167,7 @@ Text-to-SQL의 시맨틱 레이어는 데이터의 구조와 비즈니스 의미
 
 여기서 에이전트의 실행 환경까지 직접 구축할 필요가 있을까?라는 의문이 생겼다.
 
-그래서 독립적인 에이전트를 유지하기보다 시맨틱 검색, SQL 생성 및 검증, 정의 관리 기능을 Claude Code와 Codex에서 활용할 수 있도록 플러그인 구조로 전환하기로 했다.
+그래서 독립적인 에이전트를 유지하기보다 시맨틱 검색, SQL 생성 및 검증, 정의 관리 기능을 Claude Code와 Codex에서 활용할 수 있는 [Text2SQL 플러그인](https://github.com/zisu17/text2sql-plugin)으로 전환하기로 했다.
 
 ---
 
