@@ -1,6 +1,6 @@
 ---
 title: "[Text2SQL] 메타데이터와 지표 계보를 위한 GraphDB 설계"
-excerpt: "지표와 원본 컬럼을 Neo4j 그래프로 연결하고 컬럼 변경이 어떤 지표에 영향을 주는지 조회하는 구조를 설계했다."
+excerpt: "Ossie 시맨틱 정의와 DB 메타데이터를 Neo4j 그래프로 연결하는 구조를 설계하고 Olist 데이터셋을 활용해 지표 계보 추적과 변경 영향 분석을 검증한 과정을 정리한다."
 nav_section: projects
 nav_topic: text2sql
 
