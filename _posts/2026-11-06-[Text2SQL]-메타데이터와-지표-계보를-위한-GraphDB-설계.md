@@ -1,6 +1,6 @@
 ---
 title: "[Text2SQL] 메타데이터와 지표 계보를 위한 GraphDB 설계"
-excerpt: "노드·관계·속성 키와 제약을 명시하고 실제 Neo4j 조회와 화면 캡처로 검증한 메타데이터 그래프 설계를 정리한다."
+excerpt: "지표와 원본 컬럼을 Neo4j 그래프로 연결하고 컬럼 변경이 어떤 지표에 영향을 주는지 조회하는 구조를 설계했다."
 nav_section: projects
 nav_topic: text2sql
 
