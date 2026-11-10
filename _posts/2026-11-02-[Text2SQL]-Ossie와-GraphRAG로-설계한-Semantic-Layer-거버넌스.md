@@ -9,6 +9,7 @@ categories:
 tags:
   - Data
   - Text2SQL
+  - AI
   - SemanticLayer
   - Apache Ossie
   - GraphRAG

@@ -9,6 +9,7 @@ categories:
 tags:
   - Project
   - Text2SQL
+  - AI
   - GraphDB
   - Neo4j
   - SemanticLayer
