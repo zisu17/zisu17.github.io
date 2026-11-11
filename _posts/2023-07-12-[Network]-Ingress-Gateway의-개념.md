@@ -1,13 +1,13 @@
 ---
-title: "[Network] Ingress Gateway의 개념"
-excerpt: "Ingress Gateway와 Controller의 개념"
+title: "[Network] Ingress와 Ingress Controller의 차이"
+excerpt: "Service와 Ingress 그리고 Controller의 역할을 구분하고 Istio Ingress Gateway와의 차이도 정리한다."
 nav_section: engineering
 nav_topic: infrastructure
 
 categories:
   - Infra
 tags:
-  - [Network]
+  - Network
 
 permalink: /infra/[Network]-Ingress-Gateway의-개념/
 
@@ -15,54 +15,94 @@ toc: true
 toc_sticky: true
 
 date: 2023-07-12
-last_modified_at: 2023-07-12
+last_modified_at: 2026-11-12
 ---
 
 ## Ingress와 Egress
-네트워크 트래픽에서 Ingress는 일반적으로 서버 외부에서 내부로 네트워크 트래픽이 들어오는 방향을 뜻하고 이와 반대로 Egress는 서버 내부에서 외부로 네트워크 트래픽이 나가는 방향을 의미합니다.  
-예를 들어 회사의 내부 네트워크에서 외부 인터넷으로 이메일을 보내는 것은 Egress 트래픽이고 반대로 외부 인터넷에서 회사의 내부 네트워크로 이메일을 받는 것은 Ingress 트래픽입니다.  
-네트워크 관리자는 Ingress와 Egress 트래픽을 모니터링하고 분석하여 네트워크 성능을 최적화하고 보안을 유지하는데 사용합니다.  
 
-## Ingress
+네트워크에서 Ingress는 기준이 되는 네트워크 안으로 들어오는 트래픽이고 Egress는 밖으로 나가는 트래픽이다. 클러스터를 기준으로 보면 외부 사용자의 요청은 Ingress 트래픽이고 파드가 외부 API를 호출하는 요청은 Egress 트래픽이다.
 
-먼저 쿠버네티스에서의 Ingress라는 개념을 이해하려면 쿠버네티스가 어떻게 네트워크 트래픽을 관리하는지 이해하는 것이 중요합니다.  
-쿠버네티스는 컨테이너화된 애플리케이션을 실행하고 관리하는 오픈 소스 플랫폼이고 클러스터라는 개념을 사용해 여러 노드(서버)를 하나의 단위로 묶어서 관리합니다.  
-이런 컨테이너화된 애플리케이션들은 쿠버네티스 클러스터 내부에서 서비스(Service)라는 리소스 형태로 정의되고 해당 서비스는 보통 클러스터 내부에서만 접근 가능합니다.  
-이 서비스를 클러스터 외부에서 사용하려면 외부에서 클러스터 내부로의 접근 경로가 필요합니다. 이때 Ingress가 그 역할을 하게 됩니다.  
-Ingress는 말 그대로 '들어가는 길'을 의미하는데 쿠버네티스 클러스터로 들어오는 네트워크 요청을 어떻게 처리할지 정의하는 리소스입니다.  
-클러스터 외부에서 특정 URL이나 도메인으로 HTTP/HTTPS 요청이 오면 Ingress는 이를 적절한 서비스로 라우팅하여 요청을 처리합니다. 
+쿠버네티스를 공부하다 보면 `Ingress`와 `Ingress Controller`, Istio의 `Ingress Gateway`를 함께 접하게 된다. 모두 들어오는 트래픽과 관련이 있지만 같은 역할은 아니다.
 
-예를 들어 이웃집의 펫시터를 하는 상황을 생각해봅니다. 이웃집에는 강아지, 고양이, 햄스터, 토끼 등 다양한 반려동물이 있습니다.  
-각각의 반려동물을 케어하려면 이웃집에 들어가야 하고 이웃집에 들어가기 위해선 '문'을 통해 들어가야 합니다.  
-이 '문'은 이웃집에 들어가게 해주는 Ingress Gateway와 비슷합니다.  
-Ingress Gateway는 외부에서 쿠버네티스 클러스터(이웃집)로 들어오는 트래픽을 처리하고 이 '문'을 통해 클러스터 내부의 애플리케이션(반려동물들)에 접근할 수 있게 합니다.  
+## 쿠버네티스 Ingress와 Service
 
-그러나 단지 이 '문'을 통과하는 것만으로는 충분하지 않습니다.  
-각 방(서비스)에 들어가려면 각 방에 맞는 특정 '키'(접근 권한이나 자격증명)가 필요합니다.  
-예를 들어 강아지 방에 들어가려면 강아지 방 키가 고양이 방에 들어가려면 고양이 방 키가 필요합니다.  
-이 '키'가 없으면, Ingress Gateway를 통해 특정 서비스에 접근하는 것은 제한될 수 있습니다.
+쿠버네티스에서 애플리케이션은 파드로 실행된다. 파드가 재생성되면 IP가 바뀔 수 있으므로 클라이언트가 파드 IP에 직접 의존하면 연결을 유지하기 어렵다. `Service`는 파드 집합에 접근할 수 있는 주소를 제공한다.
 
-Ingress Gateway는 사용자가 '문'을 통해 클러스터 내의 다양한 서비스에 접근하게 해주는 역할을 하고 '키'는 각 서비스에 접근할 수 있는 권한을 부여합니다.  
+기본 유형인 `ClusterIP`는 클러스터 내부용이다. `NodePort`나 `LoadBalancer` 유형으로 외부에 노출할 수도 있다.
 
-## Ingress Gateway와 Ingress Controller
+`Ingress`는 HTTP·HTTPS 요청의 호스트와 경로를 어떤 Service로 보낼지 정하는 리소스이다. 예를 들어 같은 도메인으로 들어와도 `/api`는 API Service로 보내고 `/web`은 웹 Service로 보내도록 정할 수 있다.
 
-### Ingress Gateway 
-서비스 메쉬 아키텍처 특히 Istio와 같은 플랫폼에서 사용되는 개념입니다.  
-Ingress Gateway는 클러스터 외부의 트래픽을 클러스터 내부로 라우팅하는데 사용되며 고급 라우팅 기능, SSL/TLS 종료, 로드 밸런싱 등의 기능을 제공합니다.  
-또한 외부 요청을 클러스터 내부의 특정 서비스로 안전하게 라우팅하는 '문' 역할을 합니다.  
-이 '문'은 외부에서 집 안으로 들어오는 방문객들을 통제합니다. 즉 외부 트래픽(방문객)이 클러스터(집) 내부로 어떻게 들어올 수 있는지를 관리합니다.
+Ingress는 라우팅 **규칙**이지 요청을 직접 전달하는 서버가 아니다. 이 규칙을 실제 프록시나 로드 밸런서 설정에 반영하는 구성 요소가 Ingress Controller이다.
 
-### Ingress Controller
-쿠버네티스의 일부로 Ingress 리소스(트래픽 라우팅 규칙을 정의하는 쿠버네티스 오브젝트)를 해석하고 이를 바탕으로 트래픽을 적절한 서비스로 라우팅하는 역할을 합니다.  
-Ingress Controller는 Ingress 리소스의 규칙을 '실제로' 실행하는 구성 요소입니다.  
-예를 들면 집의 '관리인'이라고 볼 수 있습니다. 관리인은 집의 규칙(키를 어디에 두고, 어느 방을 어떻게 사용하는지 등)을 알고 있고 이 규칙에 따라 집을 관리합니다.  
-즉 Ingress Controller는 Ingress 규칙(외부 요청을 어떻게 처리할 것인지에 대한 규칙)을 알고 있으며 이 규칙에 따라 트래픽을 적절한 서비스로 라우팅합니다.
+## Ingress Controller
 
-따라서 이 두 개념은 각각 쿠버네티스의 트래픽 관리와 라우팅을 위한 도구이지만 그 사용법과 기능이 약간 다릅니다.  
-Istio와 같은 서비스 메쉬를 사용하는 경우 Ingress Gateway와 Ingress Controller는 함께 작동하여 트래픽을 보다 안전하고 효율적으로 관리합니다.  
+Ingress Controller는 Ingress와 관련 리소스의 변경을 감시하고 트래픽을 전달하는 프록시나 로드 밸런서의 설정을 갱신한다. 구현체에 따라 Controller와 프록시가 같은 파드에 있거나 별도로 동작할 수 있다.
 
-쿠버네티스 환경에서 스크래핑 파드가 클라이언트와 실시간으로 상호 작용하는 요구사항이 있어 Ingress Gateway와 Controller에 대해 공부해보았습니다.    
-Ingress Controller는 클라이언트의 요청에 따라 적절한 파드로 라우팅하여 인터랙티브한 통신을 가능하게 합니다.  
-또한 클라이언트는 특정 NodePort나 IP에 직접적으로 종속되지 않고 서비스의 위치(파드가 실행되는 노드)에 관계없이 원활하게 통신할 수 있습니다.  
+Ingress 리소스만 만든다고 동작하지는 않는다. 클러스터에 해당 Ingress를 처리할 Controller가 설치되어 있어야 한다. 어떤 Controller가 처리할지는 `IngressClass`로 구분한다.
+
+사용자 인증이나 접근 권한 검사는 별도 기능이다. Ingress를 만들었다는 이유만으로 자동으로 적용되지는 않는다.
+
+### 경로별로 다른 Service에 연결하기
+
+다음은 같은 도메인의 요청을 경로에 따라 나누는 예시이다. `example-class`는 실제 클러스터에 설치한 IngressClass 이름으로 바꾼다. `api-service`와 `web-service`는 같은 네임스페이스에 이미 있고 각각 8080 포트와 80 포트를 제공한다고 가정한다.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+spec:
+  ingressClassName: example-class
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
+          - path: /web
+            pathType: Prefix
+            backend:
+              service:
+                name: web-service
+                port:
+                  number: 80
+```
+
+`/api/orders` 요청은 `api-service`로 연결된다. 여기의 포트는 파드의 포트가 아니라 Service가 제공하는 포트이다. 또 이 설정만으로 `/api`가 자동으로 제거되지는 않는다. 애플리케이션이 `/orders`로 받아야 한다면 사용하는 Controller의 경로 재작성 설정을 따로 확인해야 한다.
+
+외부에서 접속하려면 도메인도 Controller가 사용하는 진입 주소를 가리켜야 한다. 연결이 안 될 때는 도메인과 진입 주소부터 확인하고 Ingress의 경로 규칙과 Service에 연결된 파드를 차례로 확인하면 된다.
+
+## Istio Ingress Gateway
+
+Istio의 Ingress Gateway는 서비스 메시 외부에서 들어온 트래픽을 받는 프록시이다. Istio의 `Gateway` 리소스로 포트와 프로토콜, TLS 설정 등을 정하고 `VirtualService`로 요청을 보낼 서비스와 경로를 정할 수 있다.
+
+Istio Ingress Gateway와 일반적인 Ingress Controller를 항상 함께 설치해야 하는 것은 아니다. 어떤 API와 구현체로 외부 트래픽을 처리할지에 따라 구성이 달라진다.
+
+| 구성 요소 | 역할 |
+|---|---|
+| Service | 파드 집합에 접근할 주소와 포트를 제공 |
+| Kubernetes Ingress | 호스트·경로별로 연결할 Service를 정의 |
+| Ingress Controller | Ingress 규칙을 실제 트래픽 처리 설정에 반영 |
+| Istio Ingress Gateway | 메시 외부에서 들어오는 트래픽을 받는 프록시 |
+| Istio Gateway·VirtualService | Gateway의 수신 설정과 서비스 라우팅을 정의 |
+
+쿠버네티스 Gateway API의 `Gateway`와 Istio API의 `Gateway`도 이름은 같지만 서로 다른 리소스이다. 설정 예제를 볼 때는 `apiVersion`까지 구분해야 한다.
+
+## 마무리
+
+스크래핑 파드와 클라이언트가 실시간으로 상호작용하는 요구사항이 있어 외부 요청을 연결하는 방식을 공부했다. 외부 요청을 어떤 Service로 보낼지는 Ingress 등에 정의하고 실제 전달은 Controller가 구성한 프록시나 Gateway가 처리한다.
+
+Service를 통해 접근하면 클라이언트가 특정 파드의 IP나 실행 노드에 직접 의존하지 않아도 된다. WebSocket처럼 연결을 오래 유지하는 방식은 사용하는 프록시의 지원 여부와 타임아웃 설정도 함께 확인해야 한다.
+
+## 참고자료
+
+- [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+- [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Istio Ingress Gateways](https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/)
 
 
