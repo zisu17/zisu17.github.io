@@ -1,139 +1,113 @@
----  
-title: "[Spark] 스파크 JDBC 파티셔닝 최적화"  
-excerpt: "스파크에서 JDBC 파티셔닝을 활용해 데이터 읽기 최적화 하기"  
+---
+title: "[Spark] JDBC 파티셔닝으로 대용량 읽기 나누기"
+excerpt: "JDBC 읽기 분할 옵션과 경계값의 동작을 확인하고 대용량 실험에서 데이터 편중과 파티션 크기를 비교한다."
 nav_section: data
 nav_topic: processing
-  
+
 categories:
   - Data Engineering
-tags:  
-  - [Data]  
-permalink: /data/[Spark]-스파크-JDBC-파티셔닝-최적화/  
-  
-toc: true  
-toc_sticky: true  
-  
+tags:
+  - Data
+permalink: /data/[Spark]-스파크-JDBC-파티셔닝-최적화/
+
+toc: true
+toc_sticky: true
+
 date: 2025-02-01
-last_modified_at: 2025-02-01
----  
-  
-## Spark JDBC
+last_modified_at: 2026-11-12
+---
 
-Spark는 JDBC를 통해 관계형 데이터베이스(RDBMS)에 연결하여 데이터를 읽거나 쓸 수 있는 기능을 제공한다. 그러나 RDBMS는 분산 처리 시스템이 아니므로 Spark의 병렬 처리 성능을 최대한 활용하려면 추가적인 최적화가 필요하다. Spark는 셔플을 최소화하기 위해 기존 파티션을 최대한 재사용하려 하므로, 데이터 읽기 시점에서부터 파티셔닝을 최적화하는 것이 중요하다. 데이터 읽기의 파티션 수가 적으면 후속 작업의 병렬성이 저하되므로, 효율적인 데이터 읽기가 필수적이다.
+## JDBC 읽기도 나누어야 할까?
 
-## JDBC를 활용한 데이터 읽기
+Spark에서 관계형 DB의 데이터를 읽을 때는 JDBC를 사용할 수 있다. 병렬 읽기를 설정하지 않으면 일반적으로 하나의 읽기 파티션으로 처리하므로 Executor를 늘려도 이 구간이 같은 비율로 빨라지지는 않는다.
 
-Spark에서 JDBC 데이터를 읽기 위해 `DataFrameReader.jdbc` 메서드를 사용한다. 아래는 기본적인 JDBC 데이터 읽기 옵션이다. 기본적으로 Spark는 데이터베이스에서 데이터를 읽을 때 단일 커넥션을 사용하므로, 데이터가 크면 속도가 느려지거나 메모리 부족으로 세션이 중단될 수 있다.
+JDBC 파티셔닝은 DB 테이블 자체를 다시 파티셔닝하는 기능이 아니다. Spark가 서로 다른 조건의 쿼리를 보내 읽기 작업을 나누는 방식이다. 따라서 Spark의 자원뿐 아니라 DB의 연결 수와 쿼리 부하도 함께 봐야 한다.
 
-```python
-df = spark.read \
-    .format("jdbc") \
-    .option("url", "jdbc:postgresql://host:5432/dbname") \
-    .option("dbtable", "schema.tablename") \
-    .option("user", "username") \
-    .option("password", "password") \
-    .load()
-```
+## 기본 읽기와 병렬 읽기
 
-| **옵션**   | **설명**                  | **예시**                                     |
-|-----------|-------------------------|-----------------------------------------|
-| url      | JDBC 연결 URL             | `jdbc:postgresql://host:5432/dbname`   |
-| dbtable  | 읽으려는 테이블 또는 서브쿼리 | `schema.tablename` 또는 `(SELECT * FROM table) AS tmp` |
-| user     | 데이터베이스 사용자 이름      | `service`                               |
-| password | 데이터베이스 비밀번호        | `*******`                               |
-
-## JDBC 데이터 파티셔닝을 통한 성능 최적화
-
-[//]: # (![JDBC 데이터 소스 분할]&#40;/assets/images/2025-02-01-[Spark]-스파크-JDBC-파티셔닝-최적화/img1.png&#41;)
-
-Spark에서 JDBC 데이터를 병렬로 읽기 위해 파티셔닝을 사용할 수 있다. 이를 위해 `partitionColumn`, `lowerBound`, `upperBound`, `numPartitions` 옵션을 모두 지정해야 하며, `partitionColumn`은 숫자, 날짜, 타임스탬프 타입이어야 한다.
-
-아래 예제는 `id` 컬럼을 기준으로 10개의 파티션을 생성하는 방식이다.
+아래는 실행 중인 `spark` 세션과 PostgreSQL JDBC 드라이버가 준비된 환경을 가정한다. 접속 정보는 환경변수에서 읽는다.
 
 ```python
-df = spark.read \
-    .format("jdbc") \
-    .option("url", "jdbc:postgresql://host:5432/dbname") \
-    .option("dbtable", "tablename") \
-    .option("user", "username") \
-    .option("password", "password") \
-    .option("partitionColumn", "id") \
-    .option("lowerBound", "1") \
-    .option("upperBound", "1000") \
-    .option("numPartitions", "10") \
+import os
+
+jdbc_options = {
+    "url": os.environ["JDBC_URL"],
+    "user": os.environ["JDBC_USER"],
+    "password": os.environ["JDBC_PASSWORD"],
+    "driver": "org.postgresql.Driver",
+}
+
+df = (
+    spark.read.format("jdbc")
+    .options(**jdbc_options)
+    .option("dbtable", "public.events")
     .load()
+)
 ```
 
-| **옵션**          | **설명**                                                 | **예시**                                     |
-|------------------|------------------------------------------------------|-----------------------------------------|
-| partitionColumn | 파티셔닝 기준 컬럼                                      | `id`                                   |
-| lowerBound      | 파티셔닝 범위 최소 값                                  | `1`                                    |
-| upperBound      | 파티셔닝 범위 최대 값                                  | `1000`                                 |
-| numPartitions   | 생성할 파티션 수                                       | `10`                                   |
+`load()`로 DataFrame을 만들었다고 전체 데이터를 이미 읽은 것은 아니다. 실제 데이터를 요구하는 액션에서 읽기 작업이 실행된다. 코드의 어느 구간을 측정하는지도 구분해야 한다.
 
-## 성능 최적화 테스트
+범위 기준 병렬 읽기는 `partitionColumn`과 `lowerBound`, `upperBound`, `numPartitions`를 함께 지정한다. 기준 컬럼은 숫자나 날짜, 타임스탬프 타입이어야 한다.
 
-테스트 환경:
-- 테이블명: `ft_cre_nurskt_clnc`
-- 총 row 수: `71,239,156건`
-- 컬럼 수: `28개`
+```python
+df = (
+    spark.read.format("jdbc")
+    .options(**jdbc_options)
+    .option("dbtable", "public.events")
+    .option("partitionColumn", "id")
+    .option("lowerBound", 1)
+    .option("upperBound", 1000)
+    .option("numPartitions", 10)
+    .load()
+)
+```
 
-| **No.** | **리소스**            | **파티셔닝 옵션**                           | **작업 수(Task)** | **파티션 왜곡 비율 (Skew Ratio)** | **소요 시간**      |
-| ------- | ------------------ | ------------------------------------- | -------------- | -------------------------- | -------------- |
-| 1       | 8코어 16GB (4개 인스턴스) | 파티셔닝 없음                               | 1              | -                          | 메모리 부족으로 세션 종료 |
-| 2       | 4코어 16GB (4개 인스턴스) | 연도별 파티셔닝 (`year_col`)                 | 20             | 11.8                       | 메모리 부족으로 세션 종료 |
-| 3       | 1코어 4GB (2개 인스턴스)  | 월별 파티셔닝 (`month_col`)                 | 12             | 1.3                        | 메모리 부족으로 세션 종료 |
-| 4       | 1코어 4GB (2개 인스턴스)  | 일자별 파티셔닝 (`day_col`)                  | 31             | 1.89                       | 6.4분           |
-| 5       | 1코어 4GB (2개 인스턴스)  | 일자별 파티셔닝 (`day_col`, `upperBound=32`) | 31             | 1.77                       | 3.7분           |
+`numPartitions`는 병렬 읽기에 사용할 파티션 수의 상한이다. 동시에 실행되는 읽기 작업 수는 Spark의 실행 슬롯에도 제한되지만 DB 연결 부하를 늘릴 수 있다는 점은 같으므로 무작정 크게 설정하지 않는다.
 
-각 파티셔닝 옵션은 아래와 같이 구성된다.
+## lowerBound와 upperBound는 필터가 아니다
 
-- **연도별 파티셔닝**
-    
-    ```
-    dbtable_sub = "(SELECT EXTRACT(YEAR FROM {partition_col2}) AS year_col, * FROM {table_name}) AS subquery"
-    df = spark.read \
-        .format("jdbc") \
-        .option("partitionColumn", "year_col") \
-        .option("lowerBound", 2003) \
-        .option("upperBound", 2024) \
-        .option("numPartitions", "100") \
-        .load()
-    ```
-    
-- **월별 파티셔닝**
-    
-    ```
-    dbtable_sub = "(SELECT EXTRACT(MONTH FROM {partition_col2}) AS month_col, * FROM {table_name}) AS subquery"
-    df = spark.read \
-        .format("jdbc") \
-        .option("partitionColumn", "month_col") \
-        .option("lowerBound", 1) \
-        .option("upperBound", 13) \
-        .option("numPartitions", "12") \
-        .load()
-    ```
-    
-- **일자별 파티셔닝 (수정된 upperBound=32 적용)**
-    
-    ```
-    df = spark.read \
-        .format("jdbc") \
-        .option("partitionColumn", "day_col") \
-        .option("lowerBound", 1) \
-        .option("upperBound", 32) \
-        .option("numPartitions", "31") \
-        .load()
-    ```
+두 값은 파티션을 나눌 간격을 정한다. `lowerBound=1`과 `upperBound=1000`을 넣었다고 ID가 1 이상 1000 미만인 행만 읽는 것은 아니다.
 
-이와 같이 다양한 파티셔닝 방식을 테스트하고 최적의 데이터 분산을 찾는 것이 성능 최적화의 핵심이다.
+예를 들어 정수 컬럼에 하한 1과 상한 5, 파티션 4개를 지정하면 Spark 3.5 계열에서는 다음과 같은 조건으로 나뉜다.
 
+| 읽기 파티션 | 조건 |
+|---|---|
+| 1 | `id < 2 OR id IS NULL` |
+| 2 | `id >= 2 AND id < 3` |
+| 3 | `id >= 3 AND id < 4` |
+| 4 | `id >= 4` |
 
-## 이슈 트래킹
+따라서 `id=100`도 마지막 파티션에 들어간다. 읽을 행 자체를 제한하려면 `dbtable`에 넣는 서브쿼리의 `WHERE` 등에 실제 필터를 지정해야 한다. `query` 옵션은 `partitionColumn`과 함께 사용할 수 없으므로 서브쿼리 방식과 구분한다.
 
-1. Data Skew 문제
+## 대용량 테이블 실험
 
-Data Skew란 특정 파티션에 데이터가 몰려 데이터가 균등하게 분산되지 않는 현상을 의미한다. 특정 태스크가 데이터량이 많아지면서 리소스 사용량이 증가하고, 전체 처리 속도가 저하될 수 있다.
+당시 실험한 테이블은 `ft_cre_nurskt_clnc`로 전체 71,239,156행과 28개 컬럼이었다. 파티셔닝 기준과 실행 자원을 바꾸며 아래 결과를 기록했다.
+
+| 번호·분할 기준 | 실행 자원 | 결과 |
+|---|---|---|
+| 1 · 파티셔닝 없음 | 8코어 16GB (4개 인스턴스) | 메모리 부족으로 세션 종료 |
+| 2 · 연도별 (`year_col`) | 4코어 16GB (4개 인스턴스) | 메모리 부족으로 세션 종료 |
+| 3 · 월별 (`month_col`) | 1코어 4GB (2개 인스턴스) | 메모리 부족으로 세션 종료 |
+| 4 · 일자별 (`day_col`) | 1코어 4GB (2개 인스턴스) | 6.4분 |
+| 5 · 일자별 (`day_col`, `upperBound=32`) | 1코어 4GB (2개 인스턴스) | 3.7분 |
+
+함께 기록한 Task 수와 Skew Ratio는 다음과 같다.
+
+| 번호 | 기록한 Task 수 | Skew Ratio |
+|---|---|---|
+| 1 | 1 | - |
+| 2 | 20 | 11.8 |
+| 3 | 12 | 1.3 |
+| 4 | 31 | 1.89 |
+| 5 | 31 | 1.77 |
+
+표의 Task 수와 Skew Ratio는 당시 기록값이다. Task 수가 JDBC 읽기 Stage만을 센 값인지는 이 표만으로 확인할 수 없으므로 아래의 읽기 파티션 수와 같은 값으로 취급하지 않는다. Skew Ratio도 계산 기준에 따라 달라지므로 실제 행 수 분포를 함께 확인한다.
+
+여러 조건을 함께 바꾼 실험이므로 시간 차이를 특정 옵션 하나의 효과로 단정하기는 어렵다. 다만 연도와 월을 기준으로 나눴을 때보다 일자를 기준으로 나눈 경우에 작업을 완료할 수 있었다.
+
+## 날짜의 어느 부분으로 나눌까?
+
+연도 기준으로 나누면 최근 연도에 데이터가 몰릴 수 있다. 반면 일자만 추출하면 여러 연도와 월의 같은 일자가 한 구간에 모인다.
 
 | 연도  | 데이터 수 | 일자 | 데이터 수 |
 |------|---------|-----|---------|
@@ -145,24 +119,63 @@ Data Skew란 특정 파티션에 데이터가 몰려 데이터가 균등하게 �
 | 2023 | 7,426,306 | 30  | 2,051,441 |
 | 2024 | 5,954,938 | 31  | 1,428,250 |
 
-테스트 초기에 날짜 컬럼의 연도를 기준으로 파티셔닝을 시도하였으나 Skew Ratio가 11.8배로 나타났다. 이는 가장 큰 파티션이 가장 작은 파티션보다 11.8배 많음을 의미하며, 결국 메모리 부족으로 세션이 종료되었다.
+위 데이터에서는 연도별 차이가 컸다. 일자 기준으로 나누면 그 편중은 줄일 수 있지만 “일자면 항상 고르게 나뉜다”는 뜻은 아니다. 업무 특성상 월말이나 특정 날짜에 데이터가 집중될 수도 있다.
 
-연도별 데이터 개수를 분석한 결과, 특정 연도의 데이터가 지나치게 많아 파티션 간 균형이 맞지 않았다. 이에 따라 일자별 파티셔닝을 수행하여 Skew Ratio를 11.8에서 1.77로 줄였다.
+다음은 개념을 확인하기 위한 일반화한 예제이다. `public.events`에 `id`와 `event_time`이 있다고 가정한다. 실험 표의 전체 조건을 그대로 재현한 코드는 아니다.
 
-2. 파티션 개수가 예상과 다르게 생성되는 문제
+```python
+subquery = """
+(
+    SELECT id,
+           event_time,
+           EXTRACT(DAY FROM event_time)::integer AS day_col
+    FROM public.events
+) AS source_data
+"""
 
-lowerBound와 upperBound를 1과 31로 설정하고 numPartitions=31로 지정하였으나 실제 생성된 파티션 수는 30개였다.
+daily_df = (
+    spark.read.format("jdbc")
+    .options(**jdbc_options)
+    .option("dbtable", subquery)
+    .option("partitionColumn", "day_col")
+    .option("lowerBound", 1)
+    .option("upperBound", 32)
+    .option("numPartitions", 31)
+    .load()
+)
 
-이는 Spark가 lowerBound를 포함하고 upperBound는 포함하지 않는 방식으로 파티션을 생성하기 때문이다. 즉, 실제 파티션 범위는 [lowerBound, upperBound) 이므로 upperBound=32로 설정해야 31개의 파티션이 정확하게 생성되었다.
+print(daily_df.rdd.getNumPartitions())
+daily_df.explain()
+```
 
-3. Skew Ratio가 낮아도 세션이 종료되는 문제
+날짜에서 연도나 월을 추출한 컬럼도 같은 방식으로 사용할 수 있다. 다만 계산식을 조건에 사용하면 기존 날짜 인덱스를 그대로 활용하지 못할 수 있다. 각 쿼리가 DB에서 얼마나 읽는지는 실행 계획도 확인해야 한다.
 
-월별 파티셔닝을 적용하였을 때, Skew Ratio는 1.3으로 가장 적었으나, 파티션별 데이터 수가 많아 메모리 부족 현상이 발생하였다. 즉, 데이터가 균등하게 분배되었더라도 각 파티션의 크기가 커지면 단일 태스크가 감당할 수 없는 수준이 되어 세션이 종료될 수 있다.
+## 파티션 수가 줄어드는 이유
 
-결론적으로, Skew Ratio가 낮다고 해서 반드시 최적화된 상태는 아니며, 적절한 파티션 크기 조정이 필요하다.
+정수 기준에서 `lowerBound=1`과 `upperBound=31`이면 두 값의 차이는 30이다. Spark 3.5.6 구현은 이 차이가 요청한 파티션 수보다 작으면 읽기 파티션 수를 줄인다. 따라서 `numPartitions=31`이어도 30개로 조정될 수 있다.
 
-주의사항
+상한을 32로 두면 차이가 31이 되어 이 예제에서는 31개로 나눌 수 있다. 이는 `[1, 32)` 범위만 읽도록 필터링했기 때문이 아니다. 첫 파티션과 마지막 파티션은 바깥쪽 값도 포함한다.
 
-Spark는 자체적으로 커넥션 풀을 관리하지 않으므로, 과도한 파티션 설정으로 인해 데이터베이스에 너무 많은 연결이 생성되지 않도록 주의해야 한다.
+기존 실험 표에는 일자 기준 Task 수가 31로 남아 있지만 이 설정 설명의 30개 읽기 파티션과는 맞지 않는 부분이 있다. 다시 확인할 때는 전체 Job의 Task 수 대신 JDBC 읽기 Stage와 `getNumPartitions()` 결과를 구분해서 기록해야 한다.
 
-numPartitions 값을 과도하게 설정하면 데이터베이스 부하가 증가할 수 있으므로 적절한 값을 설정하는 것이 중요하다.
+## 분포가 고르면 메모리 문제도 해결될까?
+
+월별 분할에서는 Skew Ratio가 1.3으로 기록됐지만 메모리 부족으로 세션이 종료됐다. 편중이 작아도 각 읽기 작업이 다루는 데이터량이 클 수 있다. 또한 같은 크기의 파티션이라도 실행 중인 다른 연산에 따라 메모리 사용량은 달라진다.
+
+파티션 하나의 전체 데이터가 항상 메모리에 한꺼번에 올라가야 하는 것은 아니다. JDBC 드라이버의 결과 가져오기 방식과 `fetchsize`, 이후 집계와 정렬, 캐시 사용 여부도 확인해야 한다. 메모리 부족이 Driver와 Executor 중 어디에서 발생했는지도 로그로 구분한다.
+
+`fetchsize`는 JDBC 드라이버가 한 번에 가져올 행 수에 영향을 주는 옵션이지 Spark 파티션 수를 늘리는 옵션은 아니다. 지원 방식은 DB와 드라이버마다 다르다. 파티션 수만 늘리거나 `fetchsize` 하나만 바꾼다고 모든 메모리 문제가 해결되지는 않는다.
+
+또 분할 쿼리는 서로 다른 연결에서 실행된다. 읽는 동안 원본 데이터가 바뀌면 전체 결과가 하나의 일관된 시점이라고 보장할 수 없다. 스냅샷 일관성이 필요하다면 DB와 수집 방식까지 함께 설계해야 한다.
+
+## 마무리
+
+JDBC 병렬 읽기는 작업을 나누는 방법이지만 DB 부하도 함께 나눈다. 먼저 기준 컬럼의 실제 분포와 각 쿼리의 실행 계획을 확인하고 DB가 감당할 수 있는 연결 수 안에서 파티션 수를 조정한다.
+
+이 실험에서는 일자 기준 분할로 작업을 완료했고 가장 짧게 기록한 시간은 3.7분이었다. 다른 테이블에도 같은 값이 맞는 것은 아니므로 입력량과 실행 자원, 읽기 파티션 수를 함께 남겨 비교해야 한다.
+
+## 참고자료
+
+- [Spark 3.5.6 JDBC 데이터 소스](https://spark.apache.org/docs/3.5.6/sql-data-sources-jdbc.html)
+- [DataFrameReader.jdbc의 연결 수 주의사항](https://spark.apache.org/docs/3.5.6/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrameReader.jdbc.html)
+- [JDBC 읽기 파티션 생성 구현](https://github.com/apache/spark/blob/v3.5.6/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/jdbc/JDBCRelation.scala)
