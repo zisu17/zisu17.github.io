@@ -1,6 +1,6 @@
 ---
 title: "[Spark] Spark NLP와 한국어 감성 분석 모델 사용하기"
-excerpt: "사전 학습 파이프라인과 한국어 분류 모델을 실행하고 Spark 처리와 로컬 추론의 차이와 결과 해석 방법을 정리한다."
+excerpt: "Spark NLP와 한국어 감성 분류 모델을 실행해본다. DataFrame 분산 처리와 로컬 추론의 차이 및 분류 결과를 해석할 때 주의할 점을 정리한다."
 nav_section: data
 nav_topic: processing
 
@@ -15,18 +15,18 @@ toc: true
 toc_sticky: true
 
 date: 2024-01-09
-last_modified_at: 2026-11-12
+last_modified_at: 2026-11-16
 ---
 
 ## Spark NLP
 
 텍스트 수집 파이프라인이 Spark로 구성되어 있다면 감성 분석도 Spark DataFrame 처리에 연결할 수 있다. Spark NLP는 Apache Spark 기반의 자연어 처리 라이브러리로 토큰화와 개체명 인식, 문장 분류 등을 파이프라인으로 구성할 수 있다.
 
-분산 처리를 지원한다는 것과 어떤 호출이든 클러스터 전체에서 실행된다는 것은 다르다. 간단한 문자열 추론과 DataFrame 변환을 나누어 확인해야 한다.
+Spark NLP는 분산 처리를 지원하지만 사용하는 API에 따라 로컬에서 추론하기도 한다. 문자열을 직접 전달하는 경우와 DataFrame에 적용하는 경우를 구분해서 확인해보려고 한다.
 
 ## 사전 학습 파이프라인 실행하기
 
-`PretrainedPipeline`은 이미 구성된 파이프라인과 모델을 내려받아 사용하게 해준다. 아래는 영문 감성 분석 예제이다. Spark NLP와 Spark, Java의 호환 환경을 먼저 준비해야 하며 처음에는 모델 다운로드 시간도 든다.
+`PretrainedPipeline`은 사전 구성된 파이프라인과 모델을 다운로드해 사용하는 클래스이다. 아래는 영문 감성 분석 예제이다. Spark NLP와 Spark, Java의 호환 버전을 먼저 준비해야 하며 처음에는 모델 다운로드 시간도 든다.
 
 ```python
 import sparknlp
@@ -52,7 +52,7 @@ for result in results:
 | 첫 번째 입력의 두 문장 | `positive`와 `negative` |
 | 두 번째 입력의 한 문장 | `negative` |
 
-좋다는 내용이 담긴 문장에도 `negative`가 반환됐다. 코드가 실행되는 것과 분류가 맞는 것은 별개이다. 오타가 있는 입력이나 실제 수집할 분야의 문장을 넣어 결과를 직접 확인해야 한다.
+좋다는 내용이 담긴 문장에도 `negative`가 반환됐다. 코드가 정상 실행되어도 감성을 잘못 분류할 수 있다. 오타가 있는 입력이나 실제 수집할 분야의 문장을 넣어 결과를 직접 확인해야 한다.
 
 ### 문자열 추론과 DataFrame 처리
 
@@ -68,9 +68,9 @@ result_df.select("text", "sentiment.result").show(truncate=False)
 
 이 경우 Spark 파이프라인의 변환으로 처리할 수 있다. 다만 모델을 실행하는 데 필요한 메모리와 파티션별 데이터량은 별도로 확인해야 한다. Spark를 사용했다는 이유만으로 모든 환경에서 더 빨라지는 것은 아니다.
 
-## 한국어 모델은 어디에서 실행할까?
+## 한국어 감성 분석 모델 사용하기
 
-[한국어 ELECTRA 분류 모델](https://sparknlp.org/2022/09/14/electra_classifier_ko_base_v3_generalized_sentiment_analysis_ko.html)은 원래 `jaehyeong`의 Hugging Face 모델을 Spark NLP에서 사용할 수 있게 제공한 모델이다. 원 모델의 출처와 Spark NLP에서 제공하는 실행 경로를 나누어 보면 된다.
+[한국어 ELECTRA 분류 모델](https://sparknlp.org/2022/09/14/electra_classifier_ko_base_v3_generalized_sentiment_analysis_ko.html)은 원래 `jaehyeong`의 Hugging Face 모델을 Spark NLP에서 사용할 수 있게 제공한 모델이다. 원본 모델을 직접 사용하는 방법과 Spark NLP로 실행하는 방법을 구분해야 한다.
 
 Spark NLP의 분류기와 Pipeline을 쓰면 Spark DataFrame에 연결할 수 있다. 반면 아래의 Hugging Face Transformers 코드는 Python 프로세스에서 모델을 실행한다. Spark Executor에 작업을 보내는 코드가 아니다.
 
@@ -123,7 +123,7 @@ label 0 : negative review
 label 1 : positive review
 ```
 
-## 레이블과 점수 읽기
+## 레이블과 점수 해석
 
 이 모델의 `0`은 부정이고 `1`은 긍정이다. 다른 모델에서도 숫자의 의미가 같다고 가정하지 말고 모델 카드와 `model.config.id2label`을 확인한다.
 

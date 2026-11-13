@@ -1,6 +1,6 @@
 ---
 title: "[Spark] Livy REST API로 Spark 작업 실행하기"
-excerpt: "Livy의 대화형 세션과 배치 제출을 구분하고 세션 생성부터 코드 실행과 결과 조회까지 연결한다."
+excerpt: "Livy REST API로 대화형 세션을 생성하고 Spark 코드를 실행한다. 배치 작업 제출과 실행 결과 확인 방법도 함께 다룬다."
 nav_section: data
 nav_topic: processing
 
@@ -15,12 +15,12 @@ toc: true
 toc_sticky: true
 
 date: 2024-01-08
-last_modified_at: 2026-11-12
+last_modified_at: 2026-11-16
 ---
 
 ## Apache Livy
 
-애플리케이션에서 Spark 작업을 실행하려면 코드를 제출하고 실행 상태와 결과를 확인할 방법이 필요하다. Apache Livy는 이 과정을 REST API로 제공하는 서비스이다. Spark 자체를 대체하는 처리 엔진이나 클러스터 매니저는 아니다.
+Apache Livy는 REST API로 Spark 작업을 실행하고 상태와 결과를 조회하는 서비스이다. 애플리케이션은 HTTP 요청으로 코드를 제출할 수 있다.
 
 클라이언트는 Livy에 HTTP 요청을 보내고 실제 계산은 Spark 드라이버와 Executor가 수행한다. 자원 할당은 Spark가 연결한 YARN이나 Kubernetes 같은 클러스터 매니저의 역할이다.
 
@@ -104,9 +104,9 @@ finally:
     response.raise_for_status()
 ```
 
-세션 생성 응답의 `id`로 이후 API 경로를 만든다. 응답에 `url`이라는 필드가 있다고 가정하지 않는다.
+세션 생성 응답의 `id`로 이후 요청에 사용할 API 경로를 만든다. 응답에는 `url` 필드가 제공되지 않으므로 클라이언트에서 경로를 구성한다.
 
-코드 제출 응답을 받았다고 계산이 끝난 것도 아니다. statement의 상태가 `available`이 되면 `output.status`를 확인한다. 코드 실행 오류는 HTTP 요청 자체가 성공해도 출력의 `error`로 전달될 수 있다.
+코드를 제출한 뒤에는 statement의 상태가 `available`이 될 때까지 기다리고 `output.status`를 확인한다. HTTP 요청이 성공해도 코드 실행은 실패할 수 있으며 이 경우 출력에 `error`가 반환된다.
 
 반복 조회에는 간격과 대기 시간 제한을 둔다. 간격 없이 요청하면 Livy에 불필요한 부하가 생기고 실패 상태를 확인하지 않으면 계속 기다릴 수 있다. 위의 시간 제한은 예제 값이므로 실제 작업 시간에 맞게 정한다.
 
@@ -133,7 +133,7 @@ print(request_json("GET", f"/batches/{batch_id}"))
 
 ## 마무리
 
-같은 세션에서 코드를 이어 실행하려면 `sessions`와 `statements`를 사용하고 준비한 파일을 실행하려면 `batches`를 사용한다. API 요청 성공과 Spark 작업 성공은 별개이므로 상태와 실행 결과를 모두 확인해야 한다.
+같은 세션에서 코드를 이어 실행하려면 `sessions`와 `statements`를 사용하고 준비한 파일을 실행하려면 `batches`를 사용한다. HTTP 응답 코드만으로 Spark 작업의 성공 여부를 알 수 없으므로 상태와 실행 결과를 모두 확인해야 한다.
 
 ## 참고자료
 
