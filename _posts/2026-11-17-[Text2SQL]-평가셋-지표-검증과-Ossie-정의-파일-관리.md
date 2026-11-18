@@ -15,6 +15,7 @@ tags:
   - Evaluation
 
 permalink: /data/text2sql-eval-metrics-definition-file-structure/
+published: false
 
 toc: true
 toc_sticky: true
